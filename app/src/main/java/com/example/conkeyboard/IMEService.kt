@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.TextUtils
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputConnection
@@ -20,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import com.github.kimkevin.hangulparser.HangulParser
 import com.github.kimkevin.hangulparser.HangulParserException
+import java.lang.Exception
 
 class IMEService : InputMethodService(), View.OnTouchListener {
     private lateinit var btnArray: ArrayList<Button>
@@ -155,6 +155,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         "¡",
         "¿"
     )
+    private var isKoreanInputting: Boolean = false
 
     override fun onCreateInputView(): View {
         val container = LinearLayout(applicationContext)
@@ -230,9 +231,15 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         longPressed = Runnable {
             when {
                 tmp < 10 -> {
-                    tmp += 1
-                    vibrator.vibrate(VibrationEffect.createOneShot(10, 135))
-                    deleteChar(1)
+                    val s =  ic.getTextBeforeCursor(1, 0)
+                    if(s.isNotEmpty())
+                        vibrator.vibrate(VibrationEffect.createOneShot(10, 135))
+                    if(isKoreanInputting)
+                        koreanDeleteManager(s.toString())
+                    else {
+                        tmp += 1
+                        deleteChar(1)
+                    }
                 }
                 else -> {
                     deleteChar(10)
@@ -247,19 +254,31 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         ic = currentInputConnection
         when(event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                try {
+                        (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked))
+                }
+                catch (e: Exception) {
+                    ((v?.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked))
+                }
                 tmp = 0
                 vibrator.vibrate(VibrationEffect.createOneShot(10, 135))
                 if (v?.id == R.id.btn_del) {
-                    deleteChar(1)
+                    if(isKoreanInputting)
+                        koreanDeleteManager(ic.getTextBeforeCursor(1, 0).toString())
+                    else {
+                        deleteChar(1)
+                    }
                     handler.postDelayed(longPressed, 400)
                 }
             }
             MotionEvent.ACTION_UP -> {
                 handler.removeCallbacks(longPressed)
+
                 when (v?.id) {
                     R.id.btn_del -> {
                         if(shiftFlag == 1)
                             changeShiftFlag(0)
+                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_shift -> {
                         when (currentLang) {
@@ -277,21 +296,27 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                 }
                             }
                         }
+                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spChar -> {
-                        //flag = 1
+                        isKoreanInputting = false
                         if (spCharFlag == 0)
                             changeToSpChar()
-                        else
+                        else {
                             when (currentLang) {
                                 "en" -> changeToEnglish()
                                 "ko" -> changeToKorean()
                             }
+                            changeShiftFlag(shiftFlag)
+                        }
+                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_next -> {
                         changeSpCharPage()
+                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_lang -> {
+                        isKoreanInputting = false
                         if(shiftFlag == 1)
                             changeShiftFlag(0)
                         when (currentLang) {
@@ -308,14 +333,21 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                     changeToKorean()
                             }
                         }
+                        (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spaceBar -> {
                         ic.commitText(" ", 1)
+                        (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
+                        isKoreanInputting = false
                     }
                     R.id.btn_enter -> {
                         ic.commitText("\n", 1)
+                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        isKoreanInputting = false
                     }
                     else -> {
+                        isKoreanInputting = currentLang == "ko"
+                        (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
                         val value: String = (v as Button).text.toString()
                         when (currentLang) {
                             "en" -> {
@@ -325,19 +357,10 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                             }
                             "ko" -> {
                                 val s = ic.getTextBeforeCursor(1, 0)
+                                if(shiftFlag == 1)
+                                    changeShiftFlag(0)
                                 if (s.isNotEmpty() && isKorean(s.toString()) && isKorean(value)) {
-                                    /*try {
-                                        val jasoList = HangulParser.disassemble(s[0])
-                                        jasoList.add(value)
-                                        //deleteChar(1)
-                                        ic.commitText(HangulParser.assemble(jasoList), 1)
-
-                                    } catch (e: HangulParserException) {
-                                        koreanInputExceptionHandler(s.toString(), value)
-                                    }*/
                                     koreanInputManager(s.toString(), value)
-                                    if(shiftFlag == 1)
-                                        changeShiftFlag(0)
                                 }
                                 else {
                                     ic.commitText(value, 1)
@@ -367,8 +390,8 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                         for (i in 0..4) {
                             btnArray[i].text = koList[i]
                         }
-                        for (i in 5..6) {
-                            btnArray[i + 3].text = koList[i]
+                        for (i in 8..9) {
+                            btnArray[i].text = koList[i]
                         }
                     }
                 }
@@ -512,7 +535,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         return s in vowelList
     }
     private fun isDiphthong(s: String): Boolean {
-        val diphthongList: List<String> = listOf("ㅟ", "ㅞ", "ㅝ", "ㅙ", "ㅘ")
+        val diphthongList: List<String> = listOf("ㅟ", "ㅞ", "ㅝ", "ㅙ", "ㅘ", "ㅚ", "ㅢ")
         return s in diphthongList
     }
     private fun isDoubleConsonant(s: String): Boolean {
@@ -603,6 +626,49 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                         deleteChar(1)
                         ic.commitText(HangulParser.assemble(jasoList), 1)
                         ic.commitText(HangulParser.assemble(tmp), 1)
+                    }
+                }
+            }
+        }
+    }
+    private fun koreanDeleteManager(s: String) {
+        val w = s[0].toString()
+
+        if(isConsonant(w) || isVowel(w)) {
+            deleteChar(1)
+            isKoreanInputting = false
+        }
+        else if(isDiphthong(w)) { //이중모음
+            val list: List<String> = KoreanDisassemble().disassembleDiphthong(w)
+            deleteChar(1)
+            ic.commitText(list[0], 1)
+        }
+        else {
+            val jasoList: MutableList<String> = HangulParser.disassemble(w)
+            when(jasoList.size) {
+                2 -> {
+                    if(isDiphthong(jasoList[1])) {
+                        val list: List<String> = KoreanDisassemble().disassembleDiphthong(jasoList[1])
+                        jasoList[1] = list[0]
+                        deleteChar(1)
+                        ic.commitText(HangulParser.assemble(jasoList), 1)
+                    }
+                    else {
+                        deleteChar(1)
+                        ic.commitText(jasoList[0], 1)
+                    }
+                }
+                3 -> {
+                    if(isDoubleConsonant(jasoList[2])) {
+                        val list: List<String> = KoreanDisassemble().disassembleDoubleConsonant(jasoList[2])
+                        jasoList[2] = list[0]
+                        deleteChar(1)
+                        ic.commitText(HangulParser.assemble(jasoList), 1)
+                    }
+                    else {
+                        jasoList.removeAt(2)
+                        deleteChar(1)
+                        ic.commitText(HangulParser.assemble(jasoList), 1)
                     }
                 }
             }
