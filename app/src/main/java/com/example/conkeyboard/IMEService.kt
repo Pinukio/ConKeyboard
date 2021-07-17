@@ -299,6 +299,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                         ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spChar -> {
+                        ic.finishComposingText()
                         isKoreanInputting = false
                         if (spCharFlag == 0)
                             changeToSpChar()
@@ -316,6 +317,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                         ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_lang -> {
+                        ic.finishComposingText()
                         isKoreanInputting = false
                         if(shiftFlag == 1)
                             changeShiftFlag(0)
@@ -336,19 +338,23 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                         (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spaceBar -> {
+                        ic.finishComposingText()
                         ic.commitText(" ", 1)
                         (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
                         isKoreanInputting = false
                     }
                     R.id.btn_enter -> {
+                        ic.finishComposingText()
                         ic.commitText("\n", 1)
                         ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                         isKoreanInputting = false
                     }
                     else -> {
-                        isKoreanInputting = currentLang == "ko"
                         (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
                         val value: String = (v as Button).text.toString()
+                        if(!isKorean(value))
+                            isKoreanInputting = false
+                        //isKoreanInputting = isKorean(value)
                         when (currentLang) {
                             "en" -> {
                                 ic.commitText(value, 1)
@@ -359,10 +365,16 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                 val s = ic.getTextBeforeCursor(1, 0)
                                 if(shiftFlag == 1)
                                     changeShiftFlag(0)
-                                if (s.isNotEmpty() && isKorean(s.toString()) && isKorean(value)) {
+                                if (s.isNotEmpty() && isKorean(s.toString()) && isKoreanInputting) {
                                     koreanInputManager(s.toString(), value)
                                 }
+                                else if(isKorean(value)) {
+                                    //ic.commitText(value, 1)
+                                    ic.setComposingText(value, 1)
+                                    isKoreanInputting = true
+                                }
                                 else {
+                                    ic.finishComposingText()
                                     ic.commitText(value, 1)
                                 }
                             }
@@ -544,34 +556,35 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     }
     private fun koreanInputManager(s: String, value: String) {
         val w = s[0].toString()
-
+        isKoreanInputting = true
         if(isConsonant(w)) { //앞 글자가 자음뿐 + 뒤에 모음이 옴
             if(isVowel(value)) {
                 val jasoList = listOf(w, value)
-                deleteChar(1)
-                ic.commitText(HangulParser.assemble(jasoList), 1)
+                ic.setComposingText(HangulParser.assemble(jasoList), 1)
             }
             else {
-                ic.commitText(value, 1)
+                ic.finishComposingText()
+                ic.setComposingText(value, 1)
             }
         }
         else if(isVowel(w)) {
             if(isVowel(value)) {
                 val result = KoreanAssemble().makeDiphthong(w, value)
                 if(result == "error") { //모음뿐 + 다른 모음
-                    ic.commitText(value, 1)
+                    ic.finishComposingText()
+                    ic.setComposingText(value, 1)
                 }
-                else {
-                    deleteChar(1)
-                    ic.commitText(result, 1)
-                }
+                else
+                    ic.setComposingText(result, 1)
             }
             else { //모음 + 자음
-                ic.commitText(value, 1)
+                ic.finishComposingText()
+                ic.setComposingText(value, 1)
             }
         }
-        else if(isDiphthong(w)) {
-            ic.commitText(value, 1)
+        else if(isDiphthong(w)) { //이중모음 + 다른 거
+            ic.finishComposingText()
+            ic.setComposingText(value, 1)
         }
         else {
             val jasoList: MutableList<String> = HangulParser.disassemble(w)
@@ -580,22 +593,22 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                     if (isVowel(value)) { //모음 + 모음
                         val result = KoreanAssemble().makeDiphthong(jasoList[1], value)
                         if (result == "error") { //이중모음 아닌 경우
-                            ic.commitText(value, 1)
+                            ic.finishComposingText()
+                            ic.setComposingText(value, 1)
                         } else { //이중모음
                             jasoList[1] = result
-                            deleteChar(1)
-                            ic.commitText(HangulParser.assemble(jasoList), 1)
+                            ic.setComposingText(HangulParser.assemble(jasoList), 1)
                         }
                     }
-                    else {
+                    else { //모음 + 자음
                         try {
                             jasoList.add(value)
                             val tmp = HangulParser.assemble(jasoList)
-                            deleteChar(1)
-                            ic.commitText(tmp, 1)
+                            ic.setComposingText(tmp, 1)
                         }
-                        catch (e: HangulParserException) {
-                            ic.commitText(value, 1)
+                        catch (e: HangulParserException) { //까+ㄸ처럼 안 합쳐지는 경우
+                            ic.finishComposingText()
+                            ic.setComposingText(value, 1)
                         }
 
                     }
@@ -604,28 +617,28 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                     if (isConsonant(value)) { //받침 + 자음
                         val result = KoreanAssemble().makeDoubleConsonant(jasoList[2], value)
                         if (result == "error") { //겹자음이 아닌 경우
-                            ic.commitText(value, 1)
+                            ic.finishComposingText()
+                            ic.setComposingText(value, 1)
                         } else {
                             jasoList[2] = result
-                            deleteChar(1)
-                            ic.commitText(HangulParser.assemble(jasoList), 1)
+                            ic.setComposingText(HangulParser.assemble(jasoList), 1)
                         }
                     }
                     else if(isConsonant(jasoList[2]) && isVowel(value)) { //받침 + 모음
                         val list: List<String> = listOf(jasoList[2], value)
                         jasoList.removeAt(2)
-                        deleteChar(1)
-                        ic.commitText(HangulParser.assemble(jasoList), 1)
-                        ic.commitText(HangulParser.assemble(list), 1)
+                        ic.setComposingText(HangulParser.assemble(jasoList), 1)
+                        ic.finishComposingText()
+                        ic.setComposingText(HangulParser.assemble(list), 1)
                     }
                     else if(isDoubleConsonant(jasoList[2]) && isVowel(value)){ //겹받침 + 모음
                         val list: List<String> = KoreanDisassemble().disassembleDoubleConsonant(jasoList[2])
                         val tmp: List<String> = listOf(list[1], value)
                         jasoList.removeAt(2)
                         jasoList.add(list[0])
-                        deleteChar(1)
-                        ic.commitText(HangulParser.assemble(jasoList), 1)
-                        ic.commitText(HangulParser.assemble(tmp), 1)
+                        ic.setComposingText(HangulParser.assemble(jasoList), 1)
+                        ic.finishComposingText()
+                        ic.setComposingText(HangulParser.assemble(tmp), 1)
                     }
                 }
             }
@@ -635,40 +648,35 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         val w = s[0].toString()
 
         if(isConsonant(w) || isVowel(w)) {
+            ic.finishComposingText()
             deleteChar(1)
             isKoreanInputting = false
         }
         else if(isDiphthong(w)) { //이중모음
             val list: List<String> = KoreanDisassemble().disassembleDiphthong(w)
-            deleteChar(1)
-            ic.commitText(list[0], 1)
+            ic.setComposingText(list[0], 1)
         }
         else {
             val jasoList: MutableList<String> = HangulParser.disassemble(w)
             when(jasoList.size) {
                 2 -> {
-                    if(isDiphthong(jasoList[1])) {
+                    if(isDiphthong(jasoList[1])) { // 이중모음
                         val list: List<String> = KoreanDisassemble().disassembleDiphthong(jasoList[1])
                         jasoList[1] = list[0]
-                        deleteChar(1)
-                        ic.commitText(HangulParser.assemble(jasoList), 1)
+                        ic.setComposingText(HangulParser.assemble(jasoList), 1)
                     }
-                    else {
-                        deleteChar(1)
-                        ic.commitText(jasoList[0], 1)
-                    }
+                    else
+                        ic.setComposingText(jasoList[0], 1)
                 }
                 3 -> {
                     if(isDoubleConsonant(jasoList[2])) {
                         val list: List<String> = KoreanDisassemble().disassembleDoubleConsonant(jasoList[2])
                         jasoList[2] = list[0]
-                        deleteChar(1)
-                        ic.commitText(HangulParser.assemble(jasoList), 1)
+                        ic.setComposingText(HangulParser.assemble(jasoList), 1)
                     }
                     else {
                         jasoList.removeAt(2)
-                        deleteChar(1)
-                        ic.commitText(HangulParser.assemble(jasoList), 1)
+                        ic.setComposingText(HangulParser.assemble(jasoList), 1)
                     }
                 }
             }
