@@ -1,20 +1,23 @@
 package com.example.conkeyboard
 
 import android.content.Context
-import android.graphics.Color
+import android.content.res.Configuration
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.text.InputType
 import android.text.TextUtils
+import android.util.Log
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.LinearLayout
+import android.widget.*
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import com.github.kimkevin.hangulparser.HangulParser
@@ -31,9 +34,11 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     private var tmp = 0
     private lateinit var shiftBtn: ImageButton
     private lateinit var spCharBtn: Button
+    private lateinit var enterBtn: ImageButton
     private var spCharFlag = 0
     private var currentLang = "en"
     private lateinit var nextBtn: Button
+    private var editorInfo: EditorInfo? = null
     private val enList: List<String> = listOf(
         "q",
         "w",
@@ -60,18 +65,19 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         "v",
         "b",
         "n",
-        "m",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0"
+        "m"
     )
+    private val numList: List<String> = listOf(
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0")
     private val koList: List<String> = listOf(
         "ㅂ",
         "ㅈ",
@@ -158,33 +164,56 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     private var isKoreanInputting: Boolean = false
 
     override fun onCreateInputView(): View {
-        val container = LinearLayout(applicationContext)
-        container.orientation = LinearLayout.VERTICAL
-        container.setBackgroundColor(Color.RED)
+        Log.i("Hello3", "asfd")
         val height = resources.displayMetrics.heightPixels
         val width = resources.displayMetrics.widthPixels
         val w = width / 200
-        container.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.MATCH_PARENT
-        )
-        val keyboardView: View = layoutInflater.inflate(R.layout.layout_keyboard, container, true)
-        val layout: LinearLayout = keyboardView.findViewById(R.id.layout)
-        layout.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            (height * 0.4).toInt()
-        )
+        val h = height / 200
+        val keyboardView: View
+        val keysLayout: LinearLayout
+        val layout: LinearLayout
+        val isPortrait: Boolean
+        //val conField: ConstraintLayout = keyboardView.findViewById(R.id.layout_con)
+        //val keyboardLayout: LinearLayout = keyboardView.findViewById(R.id.layout_keyboard)
 
+        if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            keyboardView = layoutInflater.inflate(R.layout.keyboard_portrait, null)
+            layout = keyboardView.findViewById(R.id.layout)
+            keysLayout = keyboardView.findViewById(R.id.layout_keyboard_portrait)
+            //keysLayout.visibility = View.VISIBLE
+            //keyboardView.findViewById<LinearLayout>(R.id.layout_keyboard_landscape).visibility = View.GONE
+            layout.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    (height * 0.4).toInt()
+            )
+            isPortrait = true
+        }
+        else {
+            keyboardView = layoutInflater.inflate(R.layout.keyboard_landscape, null)
+            keysLayout = keyboardView.findViewById(R.id.layout_keyboard_landscape)
+            layout = keyboardView.findViewById(R.id.layout)
+            //keyboardView.findViewById<LinearLayout>(R.id.layout_keyboard_portrait).visibility = View.GONE
+            //keysLayout.visibility = View.VISIBLE
+            layout.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    (height * 0.55).toInt()
+            )
+            isPortrait = false
+        }
         btnArray = ArrayList()
-        val keyList: List<String> = enList + listOf("spaceBar", "period", "question")
+        val keyList: List<String> = enList + numList + listOf("spaceBar", "period", "question")
+        val num =
+                if(isPortrait) w
+                else h
+
         for(i in 0..38){
             val id: String = "btn_" + keyList[i]
             val resourceID: Int = resources.getIdentifier(id, "id", packageName)
-            btnArray.add(keyboardView.findViewById(resourceID) as Button)
+            btnArray.add(keysLayout.findViewById(resourceID) as Button)
             btnArray[i].setOnTouchListener(this)
             val background: GradientDrawable = btnArray[i].background as GradientDrawable
             background.setStroke(
-                w, ContextCompat.getColor(
+                num, ContextCompat.getColor(
                     applicationContext,
                     R.color.background_gray
                 )
@@ -195,36 +224,50 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         for(i in 0..3) {
             val id: String = "btn_" + imgBtnArray[i]
             val resourceID: Int = resources.getIdentifier(id, "id", packageName)
-            val imgBtn: ImageButton = keyboardView.findViewById(resourceID) as ImageButton
+            val imgBtn: ImageButton = keysLayout.findViewById(resourceID) as ImageButton
             imgBtn.setOnTouchListener(this)
+
             if(i == 1) {
+
                 (imgBtn.background as GradientDrawable).setStroke(
-                    w, ContextCompat.getColor(
+                    num, ContextCompat.getColor(
                         applicationContext,
                         R.color.background_gray
                     )
                 )
-                imgBtn.setPadding(w * 5)
+                if(isPortrait)
+                    imgBtn.setPadding((w * 5.5).toInt())
+                else
+                    imgBtn.setPadding(w * 2)
             }
             else {
                 (imgBtn.background as LayerDrawable).setLayerInset(
                     1,
-                    (w / 5 * 12),
-                    w,
-                    (w / 5 * 12),
-                    w
+                    (num / 5 * 12),
+                        num,
+                    (num / 5 * 12),
+                        num
                 )//l t r b
-                imgBtn.setPadding((w * 10.5).toInt())
+                if(isPortrait)
+                    imgBtn.setPadding((w * 9.5).toInt())
+                else
+                    imgBtn.setPadding(w*2)
             }
         }
-        spCharBtn = keyboardView.findViewById(R.id.btn_spChar)
-        nextBtn = keyboardView.findViewById(R.id.btn_next)
-        (spCharBtn.background as LayerDrawable).setLayerInset(1, (w / 5 * 12), w, (w / 5 * 12), w)
-        (nextBtn.background as LayerDrawable).setLayerInset(1, (w / 5 * 12), w, (w / 5 * 12), w)
+        val conBtn: ImageView = keyboardView.findViewById(R.id.btn_con)
+        if(isPortrait)
+            conBtn.setPadding(w*4)
+        else
+            conBtn.setPadding(w)
+        spCharBtn = keysLayout.findViewById(R.id.btn_spChar)
+        nextBtn = keysLayout.findViewById(R.id.btn_next)
+        (spCharBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
+        (nextBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
         spCharBtn.setOnTouchListener(this)
         nextBtn.setOnTouchListener(this)
 
-        shiftBtn = keyboardView.findViewById(R.id.btn_shift)
+        shiftBtn = keysLayout.findViewById(R.id.btn_shift)
+        enterBtn = keysLayout.findViewById(R.id.btn_enter)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
         handler = Handler()
@@ -247,7 +290,42 @@ class IMEService : InputMethodService(), View.OnTouchListener {
             }
             handler.postDelayed(longPressed, 70)
         }
+        when {
+            spCharFlag == 1 -> changeToSpChar()
+            spCharFlag == 2 -> {
+                changeToSpChar()
+                changeSpCharPage()
+            }
+            currentLang == "ko" -> changeToKorean()
+        }
+        if(shiftFlag != 0)
+            changeShiftFlag(shiftFlag)
         return keyboardView
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        editorInfo = info
+        val str = (info!!.imeOptions.toString(16))
+        val value = Integer.decode(str[str.length - 1].toString())
+        try {
+            when(value) {
+                EditorInfo.IME_ACTION_SEARCH-> {
+                    enterBtn.setImageResource(R.drawable.arrow_black)
+                }
+                EditorInfo.IME_ACTION_GO -> {
+                    enterBtn.setImageResource(R.drawable.arrow_black)
+                }
+                else -> {
+                    enterBtn.setImageResource(R.drawable.enter_black)
+                    Log.i("hello6", (value == 2).toString())
+                }
+            }
+            Log.i("Hello", (Integer.decode(str[str.length - 1].toString()) == 2).toString())
+        }
+        catch (e: Exception) {
+            enterBtn.setImageResource(R.drawable.enter_black)
+        }
     }
 
     override fun onTouch(v: View?, event: MotionEvent): Boolean {
@@ -319,7 +397,9 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                     R.id.btn_lang -> {
                         ic.finishComposingText()
                         isKoreanInputting = false
-                        if(shiftFlag == 1)
+                        Log.i("heee", currentLang)
+
+                        if(shiftFlag != 0)
                             changeShiftFlag(0)
                         when (currentLang) {
                             "en" -> {
@@ -346,6 +426,9 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                     R.id.btn_enter -> {
                         ic.finishComposingText()
                         ic.commitText("\n", 1)
+                        /*try {
+                            editorInfo!!.imeOptions = EditorInfo.IME
+                        }*/
                         ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                         isKoreanInputting = false
                     }
@@ -369,7 +452,6 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                     koreanInputManager(s.toString(), value)
                                 }
                                 else if(isKorean(value)) {
-                                    //ic.commitText(value, 1)
                                     ic.setComposingText(value, 1)
                                     isKoreanInputting = true
                                 }
@@ -446,9 +528,9 @@ class IMEService : InputMethodService(), View.OnTouchListener {
             ic.commitText("", 1)
     }
     private fun changeToEnglish() {
+        btnArray[36].text = "English"
         for(i in 0..25) {
             btnArray[i].text = enList[i]
-
         }
         if(spCharFlag != 0) {
             spCharFlag = 0
@@ -461,6 +543,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
 
     }
     private fun changeToKorean() {
+        btnArray[36].text = "한글"
         for (i in 0..25) {
             btnArray[i].text = koList[i]
         }

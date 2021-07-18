@@ -10,4 +10,5 @@
     <color name="background_gray">#E3E3E3</color>
     <color name="button_gray">#CACACA</color>
     <color name="button_clicked">#A1A1A1</color>
+    <color name="background_light_gray">#EDEDED</color>
 </resources>
