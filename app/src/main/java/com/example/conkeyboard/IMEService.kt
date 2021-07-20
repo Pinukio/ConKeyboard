@@ -8,24 +8,22 @@ import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.text.InputType
 import android.text.TextUtils
 import android.util.Log
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.*
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import com.github.kimkevin.hangulparser.HangulParser
 import com.github.kimkevin.hangulparser.HangulParserException
 import java.lang.Exception
 
-class IMEService : InputMethodService(), View.OnTouchListener {
+class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private lateinit var btnArray: ArrayList<Button>
+    private lateinit var imageBtnArray: ArrayList<ImageButton>
     private var shiftFlag: Int = 0
     private lateinit var ic: InputConnection
     private lateinit var vibrator: Vibrator
@@ -36,9 +34,14 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     private lateinit var spCharBtn: Button
     private lateinit var enterBtn: ImageButton
     private var spCharFlag = 0
+    private var enterFlag = 0 //0이면 enter
     private var currentLang = "en"
     private lateinit var nextBtn: Button
     private var editorInfo: EditorInfo? = null
+    private lateinit var layout: LinearLayout
+    private lateinit var conField: LinearLayout
+    private var num = 0
+    private var isDarkMode: Boolean = false
     private val enList: List<String> = listOf(
         "q",
         "w",
@@ -164,24 +167,18 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     private var isKoreanInputting: Boolean = false
 
     override fun onCreateInputView(): View {
-        Log.i("Hello3", "asfd")
         val height = resources.displayMetrics.heightPixels
         val width = resources.displayMetrics.widthPixels
         val w = width / 200
         val h = height / 200
         val keyboardView: View
         val keysLayout: LinearLayout
-        val layout: LinearLayout
         val isPortrait: Boolean
-        //val conField: ConstraintLayout = keyboardView.findViewById(R.id.layout_con)
-        //val keyboardLayout: LinearLayout = keyboardView.findViewById(R.id.layout_keyboard)
 
         if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             keyboardView = layoutInflater.inflate(R.layout.keyboard_portrait, null)
             layout = keyboardView.findViewById(R.id.layout)
             keysLayout = keyboardView.findViewById(R.id.layout_keyboard_portrait)
-            //keysLayout.visibility = View.VISIBLE
-            //keyboardView.findViewById<LinearLayout>(R.id.layout_keyboard_landscape).visibility = View.GONE
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     (height * 0.4).toInt()
@@ -192,8 +189,6 @@ class IMEService : InputMethodService(), View.OnTouchListener {
             keyboardView = layoutInflater.inflate(R.layout.keyboard_landscape, null)
             keysLayout = keyboardView.findViewById(R.id.layout_keyboard_landscape)
             layout = keyboardView.findViewById(R.id.layout)
-            //keyboardView.findViewById<LinearLayout>(R.id.layout_keyboard_portrait).visibility = View.GONE
-            //keysLayout.visibility = View.VISIBLE
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     (height * 0.55).toInt()
@@ -202,7 +197,7 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         }
         btnArray = ArrayList()
         val keyList: List<String> = enList + numList + listOf("spaceBar", "period", "question")
-        val num =
+        num =
                 if(isPortrait) w
                 else h
 
@@ -211,49 +206,31 @@ class IMEService : InputMethodService(), View.OnTouchListener {
             val resourceID: Int = resources.getIdentifier(id, "id", packageName)
             btnArray.add(keysLayout.findViewById(resourceID) as Button)
             btnArray[i].setOnTouchListener(this)
-            val background: GradientDrawable = btnArray[i].background as GradientDrawable
-            background.setStroke(
-                num, ContextCompat.getColor(
-                    applicationContext,
-                    R.color.background_gray
-                )
-            )
         }
 
         val imgBtnArray: List<String> = listOf("del", "lang", "enter", "shift")
+        imageBtnArray = ArrayList()
         for(i in 0..3) {
             val id: String = "btn_" + imgBtnArray[i]
             val resourceID: Int = resources.getIdentifier(id, "id", packageName)
-            val imgBtn: ImageButton = keysLayout.findViewById(resourceID) as ImageButton
-            imgBtn.setOnTouchListener(this)
 
+            imageBtnArray.add(keysLayout.findViewById(resourceID) as ImageButton)
+            imageBtnArray[i].setOnTouchListener(this)
             if(i == 1) {
 
-                (imgBtn.background as GradientDrawable).setStroke(
-                    num, ContextCompat.getColor(
-                        applicationContext,
-                        R.color.background_gray
-                    )
-                )
                 if(isPortrait)
-                    imgBtn.setPadding((w * 5.5).toInt())
+                    imageBtnArray[i].setPadding((w * 5.5).toInt())
                 else
-                    imgBtn.setPadding(w * 2)
+                    imageBtnArray[i].setPadding(w * 2)
             }
             else {
-                (imgBtn.background as LayerDrawable).setLayerInset(
-                    1,
-                    (num / 5 * 12),
-                        num,
-                    (num / 5 * 12),
-                        num
-                )//l t r b
                 if(isPortrait)
-                    imgBtn.setPadding((w * 9.5).toInt())
+                    imageBtnArray[i].setPadding((w * 9.5).toInt())
                 else
-                    imgBtn.setPadding(w*2)
+                    imageBtnArray[i].setPadding(w*2)
             }
         }
+
         val conBtn: ImageView = keyboardView.findViewById(R.id.btn_con)
         if(isPortrait)
             conBtn.setPadding(w*4)
@@ -261,7 +238,9 @@ class IMEService : InputMethodService(), View.OnTouchListener {
             conBtn.setPadding(w)
         spCharBtn = keysLayout.findViewById(R.id.btn_spChar)
         nextBtn = keysLayout.findViewById(R.id.btn_next)
+        conField = layout.findViewById(R.id.layout_con)
         (spCharBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
+
         (nextBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
         spCharBtn.setOnTouchListener(this)
         nextBtn.setOnTouchListener(this)
@@ -300,31 +279,44 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         }
         if(shiftFlag != 0)
             changeShiftFlag(shiftFlag)
+
+        if(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES) {
+            changeToDarkTheme()
+            isDarkMode = true
+        }
+        else {
+            changeToLightTheme()
+            isDarkMode = false
+        }
         return keyboardView
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         editorInfo = info
-        val str = (info!!.imeOptions.toString(16))
-        val value = Integer.decode(str[str.length - 1].toString())
         try {
+            val str = (info!!.imeOptions.toString(16))
+            val value = Integer.decode(str[str.length - 1].toString())
             when(value) {
-                EditorInfo.IME_ACTION_SEARCH-> {
-                    enterBtn.setImageResource(R.drawable.arrow_black)
-                }
-                EditorInfo.IME_ACTION_GO -> {
-                    enterBtn.setImageResource(R.drawable.arrow_black)
+                EditorInfo.IME_ACTION_SEARCH, EditorInfo.IME_ACTION_GO, EditorInfo.IME_ACTION_NEXT, EditorInfo.IME_ACTION_SEND-> {
+                    if(isDarkMode)
+                        enterBtn.setImageResource(R.drawable.arrow_white)
+                    else
+                        enterBtn.setImageResource(R.drawable.arrow_black)
+                    enterFlag = value
                 }
                 else -> {
-                    enterBtn.setImageResource(R.drawable.enter_black)
-                    Log.i("hello6", (value == 2).toString())
+                    if(isDarkMode)
+                        enterBtn.setImageResource(R.drawable.enter_white)
+                    else
+                        enterBtn.setImageResource(R.drawable.enter_black)
+                    enterFlag = 0
                 }
             }
-            Log.i("Hello", (Integer.decode(str[str.length - 1].toString()) == 2).toString())
         }
         catch (e: Exception) {
             enterBtn.setImageResource(R.drawable.enter_black)
+            enterFlag = 0
         }
     }
 
@@ -333,10 +325,16 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         when(event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 try {
+                    if(isDarkMode)
+                        (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked_dark))
+                    else
                         (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked))
                 }
                 catch (e: Exception) {
-                    ((v?.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked))
+                    if(isDarkMode)
+                        ((v?.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked_dark))
+                    else
+                        ((v?.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked))
                 }
                 tmp = 0
                 vibrator.vibrate(VibrationEffect.createOneShot(10, 135))
@@ -356,7 +354,10 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                     R.id.btn_del -> {
                         if(shiftFlag == 1)
                             changeShiftFlag(0)
-                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        if(isDarkMode)
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_shift -> {
                         when (currentLang) {
@@ -374,7 +375,10 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                 }
                             }
                         }
-                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        if(isDarkMode)
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spChar -> {
                         ic.finishComposingText()
@@ -388,16 +392,21 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                             }
                             changeShiftFlag(shiftFlag)
                         }
-                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        if(isDarkMode)
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_next -> {
                         changeSpCharPage()
-                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        if(isDarkMode)
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_lang -> {
                         ic.finishComposingText()
                         isKoreanInputting = false
-                        Log.i("heee", currentLang)
 
                         if(shiftFlag != 0)
                             changeShiftFlag(0)
@@ -415,29 +424,44 @@ class IMEService : InputMethodService(), View.OnTouchListener {
                                     changeToKorean()
                             }
                         }
-                        (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        if(isDarkMode)
+                            (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                     }
                     R.id.btn_spaceBar -> {
                         ic.finishComposingText()
                         ic.commitText(" ", 1)
-                        (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
+                        if(isDarkMode)
+                            (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_color_dark))
+                        else
+                            (v.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
                         isKoreanInputting = false
                     }
                     R.id.btn_enter -> {
-                        ic.finishComposingText()
-                        ic.commitText("\n", 1)
-                        /*try {
-                            editorInfo!!.imeOptions = EditorInfo.IME
-                        }*/
-                        ((v.background as LayerDrawable).findDrawableByLayerId(R.id.draw) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                        when(enterFlag) {
+                            0 -> {
+                                ic.finishComposingText()
+                                ic.commitText("\n", 1)
+                            }
+                            else -> {
+                                ic.performEditorAction(enterFlag)
+                            }
+                        }
+                        if(isDarkMode)
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                        else
+                            ((v.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
                         isKoreanInputting = false
                     }
                     else -> {
-                        (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
+                        if(isDarkMode)
+                            (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_color_dark))
+                        else
+                            (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
                         val value: String = (v as Button).text.toString()
                         if(!isKorean(value))
                             isKoreanInputting = false
-                        //isKoreanInputting = isKorean(value)
                         when (currentLang) {
                             "en" -> {
                                 ic.commitText(value, 1)
@@ -471,7 +495,10 @@ class IMEService : InputMethodService(), View.OnTouchListener {
     private fun changeShiftFlag(flag: Int){
         when(flag){
             0 -> {
-                shiftBtn.setImageResource(R.drawable.shift_black)
+                if(isDarkMode)
+                    shiftBtn.setImageResource(R.drawable.shift_white)
+                else
+                    shiftBtn.setImageResource(R.drawable.shift_black)
                 shiftFlag = 0
                 when (currentLang) {
                     "en" -> {
@@ -769,5 +796,121 @@ class IMEService : InputMethodService(), View.OnTouchListener {
         val c = s[0].toInt()
         if(c in 0x1100..0x11FF || c in 0x3130..0x318F || c in 0xAC00..0xD7A3) return true
         return false
+    }
+    private fun changeToLightTheme() {
+        layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
+        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_conField))
+        for(i in 0..38) {
+            (btnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
+        }
+        for(i in 0..3) {
+            if(i == 1)
+                (imageBtnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
+            else {
+                ((imageBtnArray[i].background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+                ((imageBtnArray[i].background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
+            }
+        }
+
+        ((spCharBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+        ((spCharBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
+        spCharBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
+
+        ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_gray))
+        ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
+        nextBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
+
+        setLightStroke(num)
+    }
+    private fun changeToDarkTheme() {
+        layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.black))
+        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_conField_dark))
+        for(i in 0..38) {
+            (btnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_color_dark))
+            btnArray[i].setTextColor(ContextCompat.getColor(applicationContext, R.color.white))
+        }
+        val resIdList: List<Int> = listOf(R.drawable.backspace_white, R.drawable.globe_white, R.drawable.enter_white, R.drawable.shift_white)
+        for(i in 0..3) {
+            if(i == 1)
+                (imageBtnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+            else {
+                ((imageBtnArray[i].background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+                ((imageBtnArray[i].background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.black))
+            }
+            imageBtnArray[i].setImageResource(resIdList[i])
+        }
+        ((spCharBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+        ((spCharBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.black))
+        spCharBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.white))
+
+        ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_background) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_dark))
+        ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.black))
+        nextBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.white))
+
+        setDarkStroke(num)
+
+    }
+    private fun setLightStroke(num: Int) {
+        for(i in 0..38) {
+            val background: GradientDrawable = btnArray[i].background as GradientDrawable
+            background.setStroke(
+                    num, ContextCompat.getColor(
+                    applicationContext,
+                    R.color.background_gray
+            )
+            )
+        }
+        for(i in 0..3) {
+            if(i == 1) {
+                (imageBtnArray[i].background as GradientDrawable).setStroke(
+                        num, ContextCompat.getColor(
+                        applicationContext,
+                        R.color.background_gray
+                )
+                )
+            }
+            else {
+                (imageBtnArray[i].background as LayerDrawable).setLayerInset(
+                        1,
+                        (num / 5 * 12),
+                        num,
+                        (num / 5 * 12),
+                        num
+                )//l t r b
+            }
+        }
+    }
+    private fun setDarkStroke(num: Int) {
+        for(i in 0..38) {
+            val background: GradientDrawable = btnArray[i].background as GradientDrawable
+            background.setStroke(
+                    num, ContextCompat.getColor(
+                    applicationContext,
+                    R.color.black
+            )
+            )
+        }
+        for(i in 0..3) {
+            if(i == 1) {
+                (imageBtnArray[i].background as GradientDrawable).setStroke(
+                        num, ContextCompat.getColor(
+                        applicationContext,
+                        R.color.black
+                )
+                )
+            }
+            else {
+                (imageBtnArray[i].background as LayerDrawable).setLayerInset(
+                        1,
+                        (num / 5 * 12),
+                        num,
+                        (num / 5 * 12),
+                        num
+                )//l t r b
+            }
+        }
+    }
+    override fun onClick(i: Int) {
+        TODO("Not yet implemented")
     }
 }

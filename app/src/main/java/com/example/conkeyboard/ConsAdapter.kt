@@ -7,14 +7,18 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 
-class ConsAdapter(val imgList: ArrayList<Bitmap>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ConsAdapter(private val imgList: ArrayList<Bitmap>, private val listener: OnItemClick): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_con, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        (holder as MyViewHolder).conImg.setImageBitmap(imgList[position])
+        val item = (holder as MyViewHolder).conImg
+        item.setImageBitmap(imgList[position])
+        item.setOnClickListener {
+            listener.onClick(position)
+        }
     }
 
     override fun getItemCount(): Int {

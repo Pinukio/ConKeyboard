@@ -3,33 +3,41 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:background="@color/background_gray">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/layout"
         android:orientation="vertical"
-        android:weightSum="6">
+        android:weightSum="6"
+        android:background="@color/background_gray">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@color/background_light_gray"
-            android:id="@+id/layout_con">
+            android:background="@color/background_conField"
+            android:id="@+id/layout_con"
+            android:weightSum="10"
+            android:orientation="horizontal">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:id="@+id/recycler_cons"
+                android:orientation="horizontal"
+                android:layout_weight="8.85"/>
+
             <ImageView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:src="@drawable/img_con"
                 android:scaleType="fitCenter"
                 android:id="@+id/btn_con"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_weight="1"/>
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
