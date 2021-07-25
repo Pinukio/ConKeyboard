@@ -26,6 +26,6 @@
             <meta-data android:name="android.view.im" android:resource="@xml/ime_info"/>
         </service>
     </application>
-    <uses-permission android:name="android.permission.VIBRATE" />
-
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

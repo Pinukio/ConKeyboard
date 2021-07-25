@@ -5,9 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
 
-class ConsAdapter(private val imgList: ArrayList<Bitmap>, private val listener: OnItemClick): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ConsAdapter(private val imgList: ArrayList<Bitmap>, private val listener: OnItemClick, private val w: Int): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_con, parent, false))
@@ -16,6 +17,7 @@ class ConsAdapter(private val imgList: ArrayList<Bitmap>, private val listener: 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = (holder as MyViewHolder).conImg
         item.setImageBitmap(imgList[position])
+        item.setPadding(w)
         item.setOnClickListener {
             listener.onClick(position)
         }

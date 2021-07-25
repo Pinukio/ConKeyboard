@@ -28,6 +28,5 @@ class KoreanDisassemble {
             "ㅄ" -> listOf("ㅂ", "ㅅ")
             else -> listOf()
         }
-
     }
 }

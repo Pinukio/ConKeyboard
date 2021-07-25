@@ -17,25 +17,48 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.7"
-            android:background="@color/background_conField"
+            android:background="@color/background_field_con"
             android:orientation="horizontal"
             android:weightSum="10"
-            android:id="@+id/layout_con">
+            android:id="@+id/field_con">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:id="@+id/recycler_cons"
                 android:orientation="horizontal"
-                android:layout_weight="8.85"/>
+                android:layout_weight="8.99" />
+
+            <!--<EditText
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:visibility="visible"
+                android:layout_weight="8.99"
+                android:id="@+id/field_search"
+                android:hint="검색"
+                android:imeOptions="actionGo"
+                android:background="@drawable/field_search"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"/>-->
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.01"
+                android:background="@color/gray"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="1dp"
+                android:layout_marginEnd="1dp"/>
 
             <ImageView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:src="@drawable/img_con"
                 android:scaleType="fitCenter"
-                android:id="@+id/btn_con"
-                android:layout_weight="1"/>
+                android:id="@+id/btn_con_shop"
+                android:layout_weight="1"
+                />
 
         </LinearLayout>
 

@@ -17,8 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@color/background_conField"
-            android:id="@+id/layout_con"
+            android:background="@color/background_field_con"
+            android:id="@+id/field_con"
             android:weightSum="10"
             android:orientation="horizontal">
 
@@ -27,14 +27,22 @@
                 android:layout_height="match_parent"
                 android:id="@+id/recycler_cons"
                 android:orientation="horizontal"
-                android:layout_weight="8.85"/>
+                android:layout_weight="8.99"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.01"
+                android:background="@color/gray"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"/>
 
             <ImageView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:src="@drawable/img_con"
                 android:scaleType="fitCenter"
-                android:id="@+id/btn_con"
+                android:id="@+id/btn_con_shop"
                 android:layout_weight="1"/>
 
         </LinearLayout>

@@ -1,13 +1,15 @@
 package com.example.conkeyboard
 
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
-import android.os.Handler
-import android.os.VibrationEffect
-import android.os.Vibrator
+import android.os.*
 import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
@@ -16,9 +18,12 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.*
 import androidx.core.content.ContextCompat
+import androidx.core.view.marginStart
+import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import com.github.kimkevin.hangulparser.HangulParser
 import com.github.kimkevin.hangulparser.HangulParserException
+import java.io.*
 import java.lang.Exception
 
 class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
@@ -42,128 +47,11 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private lateinit var conField: LinearLayout
     private var num = 0
     private var isDarkMode: Boolean = false
-    private val enList: List<String> = listOf(
-        "q",
-        "w",
-        "e",
-        "r",
-        "t",
-        "y",
-        "u",
-        "i",
-        "o",
-        "p",
-        "a",
-        "s",
-        "d",
-        "f",
-        "g",
-        "h",
-        "j",
-        "k",
-        "l",
-        "z",
-        "x",
-        "c",
-        "v",
-        "b",
-        "n",
-        "m"
-    )
-    private val numList: List<String> = listOf(
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "0")
-    private val koList: List<String> = listOf(
-        "ㅂ",
-        "ㅈ",
-        "ㄷ",
-        "ㄱ",
-        "ㅅ",
-        "ㅛ",
-        "ㅕ",
-        "ㅑ",
-        "ㅐ",
-        "ㅔ",
-        "ㅁ",
-        "ㄴ",
-        "ㅇ",
-        "ㄹ",
-        "ㅎ",
-        "ㅗ",
-        "ㅓ",
-        "ㅏ",
-        "ㅣ",
-        "ㅋ",
-        "ㅌ",
-        "ㅊ",
-        "ㅍ",
-        "ㅠ",
-        "ㅜ",
-        "ㅡ"
-    )
+    private val enList: List<String> = listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m")
+    private val numList: List<String> = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+    private val koList: List<String> = listOf("ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ", "ㅐ", "ㅔ", "ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ", "ㅋ", "ㅌ", "ㅊ", "ㅍ", "ㅠ", "ㅜ", "ㅡ")
     private val koShiftList: List<String> = listOf("ㅃ", "ㅉ", "ㄸ", "ㄲ", "ㅆ", "ㅒ", "ㅖ")
-    private val spCharList: List<String> = listOf(
-        "+",
-        "×",
-        "÷",
-        "=",
-        "/",
-        "_",
-        "<",
-        ">",
-        "♡",
-        "☆",
-        "!",
-        "@",
-        "#",
-        "%",
-        "^",
-        "&",
-        "*",
-        "(",
-        ")",
-        "~",
-        "-",
-        "\'",
-        "\"",
-        ":",
-        ";",
-        ",",
-        "?",
-        "￦",
-        "\\",
-        "|",
-        "♤",
-        "♧",
-        "{",
-        "}",
-        "[",
-        "]",
-        "`",
-        "•",
-        "○",
-        "●",
-        "□",
-        "■",
-        "◇",
-        "\$",
-        "€",
-        "£",
-        "¥",
-        "°",
-        "《",
-        "》",
-        "¡",
-        "¿"
-    )
+    private val spCharList: List<String> = listOf("+", "×", "÷", "=", "/", "_", "<", ">", "♡", "☆", "!", "@", "#", "%", "^", "&", "*", "(", ")", "~", "-", "\'", "\"", ":", ";", ",", "?", "￦", "\\", "|", "♤", "♧", "{", "}", "[", "]", "`", "•", "○", "●", "□", "■", "◇", "\$", "€", "£", "¥", "°", "《", "》", "¡", "¿")
     private var isKoreanInputting: Boolean = false
 
     override fun onCreateInputView(): View {
@@ -181,7 +69,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             keysLayout = keyboardView.findViewById(R.id.layout_keyboard_portrait)
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    (height * 0.4).toInt()
+                    (height * 0.4).toInt() //0.4 -> 0.45
             )
             isPortrait = true
         }
@@ -191,7 +79,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             layout = keyboardView.findViewById(R.id.layout)
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    (height * 0.55).toInt()
+                    (height * 0.55).toInt() // 0.55 -> 0.62
             )
             isPortrait = false
         }
@@ -217,29 +105,38 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             imageBtnArray.add(keysLayout.findViewById(resourceID) as ImageButton)
             imageBtnArray[i].setOnTouchListener(this)
             if(i == 1) {
-
                 if(isPortrait)
                     imageBtnArray[i].setPadding((w * 5.5).toInt())
                 else
-                    imageBtnArray[i].setPadding(w * 2)
+                    imageBtnArray[i].setPadding((h*4.5).toInt())
             }
             else {
                 if(isPortrait)
-                    imageBtnArray[i].setPadding((w * 9.5).toInt())
+                    imageBtnArray[i].setPadding((h*4.5).toInt())
                 else
-                    imageBtnArray[i].setPadding(w*2)
+                    imageBtnArray[i].setPadding((h*4.5).toInt())
             }
         }
+        val shopBtn: ImageView = keyboardView.findViewById(R.id.btn_con_shop)
+        shopBtn.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK + Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        }
 
-        val conBtn: ImageView = keyboardView.findViewById(R.id.btn_con)
         if(isPortrait)
-            conBtn.setPadding(w*4)
+            shopBtn.setPadding(w*4)
         else
-            conBtn.setPadding(w)
+            shopBtn.setPadding(w)
         spCharBtn = keysLayout.findViewById(R.id.btn_spChar)
         nextBtn = keysLayout.findViewById(R.id.btn_next)
-        conField = layout.findViewById(R.id.layout_con)
+        conField = layout.findViewById(R.id.field_con)
         (spCharBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
+        /*val searchField: EditText = keyboardView.findViewById(R.id.field_search)
+        searchField.setPadding(w*4, 0, w*4, 0)
+        val parameter = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 8.99f)
+        parameter.setMargins(w*3)
+        searchField.layoutParams = parameter*/
 
         (nextBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
         spCharBtn.setOnTouchListener(this)
@@ -269,6 +166,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
             handler.postDelayed(longPressed, 70)
         }
+
         when {
             spCharFlag == 1 -> changeToSpChar()
             spCharFlag == 2 -> {
@@ -280,6 +178,38 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         if(shiftFlag != 0)
             changeShiftFlag(shiftFlag)
 
+        /*val asyncTask = object: AsyncTask<URL, Void, Bitmap?>() {
+
+                override fun doInBackground(vararg params: URL?): Bitmap? {
+                    var image: Bitmap? = null
+                    val connection = params[0]!!.openConnection() as HttpURLConnection
+                    connection.doInput = true
+                    connection.connect()
+                    val inputStream = connection.inputStream
+                    image = BitmapFactory.decodeStream(inputStream)
+
+                    return image
+                }
+
+                override fun onPostExecute(result: Bitmap?) {
+                    super.onPostExecute(result)
+                    conBtn.setImageBitmap(result)
+                }
+            }*/
+        /*try {
+
+            val url = URL("https://dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b651e2266e79fc0b482b5f70a198820b52524e32ef672151f3ea6de3f94c9d9cf788f772e8cd04044f")
+            saveImage(ImageDownloadTask().execute(url).get()!!)
+        }
+        catch (e: Exception) {
+            e.printStackTrace()
+        }*/
+        //loadImage(ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE), conBtn)
+        return keyboardView
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
         if(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES) {
             changeToDarkTheme()
             isDarkMode = true
@@ -288,11 +218,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             changeToLightTheme()
             isDarkMode = false
         }
-        return keyboardView
-    }
-
-    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
-        super.onStartInputView(info, restarting)
         editorInfo = info
         try {
             val str = (info!!.imeOptions.toString(16))
@@ -324,6 +249,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         ic = currentInputConnection
         when(event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+
                 try {
                     if(isDarkMode)
                         (v?.background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_clicked_dark))
@@ -339,6 +265,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
                 tmp = 0
                 vibrator.vibrate(VibrationEffect.createOneShot(10, 135))
                 if (v?.id == R.id.btn_del) {
+
                     if(isKoreanInputting)
                         koreanDeleteManager(ic.getTextBeforeCursor(1, 0).toString())
                     else {
@@ -614,46 +541,11 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         }
     }
     private fun isConsonant(s: String): Boolean {
-        val consonantList: List<String> = listOf(
-            "ㅂ",
-            "ㅈ",
-            "ㄷ",
-            "ㄱ",
-            "ㅅ",
-            "ㅁ",
-            "ㄴ",
-            "ㅇ",
-            "ㄹ",
-            "ㅎ",
-            "ㅋ",
-            "ㅌ",
-            "ㅊ",
-            "ㅍ",
-            "ㅃ",
-            "ㅉ",
-            "ㄸ",
-            "ㄲ",
-            "ㅆ"
-        )
+        val consonantList: List<String> = listOf("ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅋ", "ㅌ", "ㅊ", "ㅍ", "ㅃ", "ㅉ", "ㄸ", "ㄲ", "ㅆ")
         return s in consonantList
     }
     private fun isVowel(s: String): Boolean {
-        val vowelList: List<String> = listOf(
-            "ㅛ",
-            "ㅕ",
-            "ㅑ",
-            "ㅐ",
-            "ㅔ",
-            "ㅗ",
-            "ㅓ",
-            "ㅏ",
-            "ㅣ",
-            "ㅠ",
-            "ㅜ",
-            "ㅡ",
-            "ㅒ",
-            "ㅖ"
-        )
+        val vowelList: List<String> = listOf("ㅛ", "ㅕ", "ㅑ", "ㅐ", "ㅔ", "ㅗ", "ㅓ", "ㅏ", "ㅣ", "ㅠ", "ㅜ", "ㅡ", "ㅒ", "ㅖ")
         return s in vowelList
     }
     private fun isDiphthong(s: String): Boolean {
@@ -799,7 +691,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     }
     private fun changeToLightTheme() {
         layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
-        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_conField))
+        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_field_con))
         for(i in 0..38) {
             (btnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.white))
         }
@@ -824,7 +716,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     }
     private fun changeToDarkTheme() {
         layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.black))
-        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_conField_dark))
+        conField.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
         for(i in 0..38) {
             (btnArray[i].background as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.button_color_dark))
             btnArray[i].setTextColor(ContextCompat.getColor(applicationContext, R.color.white))
@@ -912,5 +804,57 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     }
     override fun onClick(i: Int) {
         TODO("Not yet implemented")
+    }
+
+    override fun onUpdateSelection(oldSelStart: Int, oldSelEnd: Int, newSelStart: Int, newSelEnd: Int, candidatesStart: Int, candidatesEnd: Int) {
+        super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        val diff = newSelEnd - oldSelEnd
+
+        if(isKoreanInputting) {
+            if((diff != 1 && diff != 0) || !TextUtils.isEmpty(ic.getSelectedText(0))) {
+                ic.finishComposingText()
+                isKoreanInputting = false
+            }
+        }
+    }
+    private fun saveImage(bm: Bitmap) {
+        /*val resolver = applicationContext.contentResolver
+        val externalFilesDir = applicationContext.getExternalFilesDir("")
+        val relativeLocation: String = Environment.DIRECTORY_DCIM
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "123")
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "")
+        }*/
+        val cw = ContextWrapper(applicationContext)
+        val directory: File = cw.getDir("imageDir", Context.MODE_PRIVATE)
+        val myPath = File(directory, "test1.png")
+        var fos: FileOutputStream? = null
+        try {
+            fos = FileOutputStream(myPath)
+            bm.compress(Bitmap.CompressFormat.PNG, 100, fos)
+        }
+        catch (e: Exception) {
+            e.printStackTrace()
+        }
+        finally {
+            try {
+                fos!!.close()
+            }
+            catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun loadImage(path: File, imageView: ImageView) {
+        try {
+            val f = File(path, "test1.png")
+            val b = BitmapFactory.decodeStream(FileInputStream(f))
+            imageView.setImageBitmap(b)
+        }
+        catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        }
     }
 }
