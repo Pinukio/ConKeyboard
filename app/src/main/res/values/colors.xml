@@ -10,12 +10,16 @@
     <color name="background_gray">#E3E3E3</color>
     <color name="button_gray">#CACACA</color>
     <color name="button_dark">#171717</color>
-    <color name="button_color_dark">#2d2d2d</color>
+    <color name="button_color_dark">#2D2D2D</color>
     <color name="button_clicked">#A1A1A1</color>
-    <color name="button_clicked_dark">#3d3d3d</color>
+    <color name="button_clicked_dark">#3D3D3D</color>
     <color name="background_field_con">#EDEDED</color>
     <color name="background_field_con_dark">#262626</color>
     <color name="gray">#5E5E5E</color>
-    <color name="background_field_search_dark">#4b4b4b</color>
-    <color name="background_btn_download">#3a4690</color>
+    <color name="background_btn_download">#3A4690</color>
+    <color name="color_main_transparent">#5E3A4690</color>
+    <color name="background_btn_remove">#EDEDED</color>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="title_con_clicked">#CACACA</color>
+    <color name="title_con_clicked_dark">#3D3D3D</color>
 </resources>

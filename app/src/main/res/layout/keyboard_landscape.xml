@@ -25,9 +25,12 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:id="@+id/recycler_cons"
+                android:id="@+id/recycler_title_cons"
                 android:orientation="horizontal"
-                android:layout_weight="8.99"/>
+                android:layout_weight="8.99"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:stackFromEnd="true"
+                app:reverseLayout="true"/>
 
             <View
                 android:layout_width="0dp"

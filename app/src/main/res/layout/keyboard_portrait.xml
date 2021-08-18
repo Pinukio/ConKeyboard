@@ -25,9 +25,12 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:id="@+id/recycler_cons"
+                android:id="@+id/recycler_title_cons"
+                android:layout_weight="8.99"
                 android:orientation="horizontal"
-                android:layout_weight="8.99" />
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:stackFromEnd="true"
+                app:reverseLayout="true"/>
 
             <!--<EditText
                 android:layout_width="0dp"
@@ -51,7 +54,7 @@
                 android:layout_marginStart="1dp"
                 android:layout_marginEnd="1dp"/>
 
-            <ImageView
+            <pl.droidsonroids.gif.GifImageView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:src="@drawable/img_con"

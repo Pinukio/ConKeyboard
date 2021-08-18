@@ -18,13 +18,16 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.*
 import androidx.core.content.ContextCompat
-import androidx.core.view.marginStart
-import androidx.core.view.setMargins
 import androidx.core.view.setPadding
+import androidx.recyclerview.widget.RecyclerView
 import com.github.kimkevin.hangulparser.HangulParser
 import com.github.kimkevin.hangulparser.HangulParserException
+import pl.droidsonroids.gif.GifDrawable
+import pl.droidsonroids.gif.GifImageView
 import java.io.*
 import java.lang.Exception
+import java.net.URL
+import java.net.URLConnection
 
 class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private lateinit var btnArray: ArrayList<Button>
@@ -53,6 +56,8 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private val koShiftList: List<String> = listOf("ㅃ", "ㅉ", "ㄸ", "ㄲ", "ㅆ", "ㅒ", "ㅖ")
     private val spCharList: List<String> = listOf("+", "×", "÷", "=", "/", "_", "<", ">", "♡", "☆", "!", "@", "#", "%", "^", "&", "*", "(", ")", "~", "-", "\'", "\"", ":", ";", ",", "?", "￦", "\\", "|", "♤", "♧", "{", "}", "[", "]", "`", "•", "○", "●", "□", "■", "◇", "\$", "€", "£", "¥", "°", "《", "》", "¡", "¿")
     private var isKoreanInputting: Boolean = false
+    private lateinit var adapter: ConFieldAdapter
+    private var prePos: Int = -1
 
     override fun onCreateInputView(): View {
         val height = resources.displayMetrics.heightPixels
@@ -69,7 +74,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             keysLayout = keyboardView.findViewById(R.id.layout_keyboard_portrait)
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    (height * 0.4).toInt() //0.4 -> 0.45
+                    (height * 0.4).toInt()
             )
             isPortrait = true
         }
@@ -79,7 +84,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             layout = keyboardView.findViewById(R.id.layout)
             layout.layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    (height * 0.55).toInt() // 0.55 -> 0.62
+                    (height * 0.55).toInt()
             )
             isPortrait = false
         }
@@ -106,7 +111,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             imageBtnArray[i].setOnTouchListener(this)
             if(i == 1) {
                 if(isPortrait)
-                    imageBtnArray[i].setPadding((w * 5.5).toInt())
+                    imageBtnArray[i].setPadding((w*5.5).toInt())
                 else
                     imageBtnArray[i].setPadding((h*4.5).toInt())
             }
@@ -132,12 +137,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         nextBtn = keysLayout.findViewById(R.id.btn_next)
         conField = layout.findViewById(R.id.field_con)
         (spCharBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
-        /*val searchField: EditText = keyboardView.findViewById(R.id.field_search)
-        searchField.setPadding(w*4, 0, w*4, 0)
-        val parameter = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 8.99f)
-        parameter.setMargins(w*3)
-        searchField.layoutParams = parameter*/
-
         (nextBtn.background as LayerDrawable).setLayerInset(1, (num / 5 * 12), num, (num / 5 * 12), num)
         spCharBtn.setOnTouchListener(this)
         nextBtn.setOnTouchListener(this)
@@ -178,33 +177,29 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         if(shiftFlag != 0)
             changeShiftFlag(shiftFlag)
 
-        /*val asyncTask = object: AsyncTask<URL, Void, Bitmap?>() {
+        //val url = URL("https://dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b65eef226e7d0ad0c9f0461fd81612450d300b20c302d43050b1f8de8244bc74a859b08baf052b19a0228134314a")
+        //val byteArray = ConvertToByteArrayTask().execute(listOf(url)).get()[0]!!
+        //shopBtn.setImageDrawable(GifDrawable(byteArray))
+        //saveImage(byteArray, getPath("123"), "icon_4.gif")
+        //val ba = loadGIF(getPath("123"), "icon_4.gif")
+        val ba = File(getPath("123"), "icon_2.gif").readBytes()
+        val type = URLConnection.guessContentTypeFromStream(ByteArrayInputStream(ba)) //"image/gif, image/png
 
-                override fun doInBackground(vararg params: URL?): Bitmap? {
-                    var image: Bitmap? = null
-                    val connection = params[0]!!.openConnection() as HttpURLConnection
-                    connection.doInput = true
-                    connection.connect()
-                    val inputStream = connection.inputStream
-                    image = BitmapFactory.decodeStream(inputStream)
+        val recycler: RecyclerView = keyboardView.findViewById(R.id.recycler_title_cons)
+        val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
+        val useConArrayList: ArrayList<String>? = PreferenceManager().getConNumList(applicationContext, "use")
 
-                    return image
-                }
+        if(useConArrayList != null) {
+            for(i in useConArrayList.indices) {
+                bitmapArrayList.add(loadPNG(getPath(useConArrayList[i]), "title.jpg"))
+            }
+            adapter =
+                    if(isPortrait) ConFieldAdapter(bitmapArrayList, this, w*4)
+                    else ConFieldAdapter(bitmapArrayList, this, w)
 
-                override fun onPostExecute(result: Bitmap?) {
-                    super.onPostExecute(result)
-                    conBtn.setImageBitmap(result)
-                }
-            }*/
-        /*try {
+            recycler.adapter = adapter
+        }   
 
-            val url = URL("https://dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b651e2266e79fc0b482b5f70a198820b52524e32ef672151f3ea6de3f94c9d9cf788f772e8cd04044f")
-            saveImage(ImageDownloadTask().execute(url).get()!!)
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }*/
-        //loadImage(ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE), conBtn)
         return keyboardView
     }
 
@@ -712,7 +707,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.background_gray))
         nextBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
 
-        setLightStroke(num)
+        setLightStroke()
     }
     private fun changeToDarkTheme() {
         layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.black))
@@ -739,10 +734,10 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         ((nextBtn.background as LayerDrawable).findDrawableByLayerId(R.id.btn_img_stroke) as GradientDrawable).setColor(ContextCompat.getColor(applicationContext, R.color.black))
         nextBtn.setTextColor(ContextCompat.getColor(applicationContext, R.color.white))
 
-        setDarkStroke(num)
+        setDarkStroke()
 
     }
-    private fun setLightStroke(num: Int) {
+    private fun setLightStroke() {
         for(i in 0..38) {
             val background: GradientDrawable = btnArray[i].background as GradientDrawable
             background.setStroke(
@@ -772,7 +767,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
         }
     }
-    private fun setDarkStroke(num: Int) {
+    private fun setDarkStroke() {
         for(i in 0..38) {
             val background: GradientDrawable = btnArray[i].background as GradientDrawable
             background.setStroke(
@@ -802,8 +797,40 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
         }
     }
-    override fun onClick(i: Int) {
-        TODO("Not yet implemented")
+    override fun onClick(position: Int) {
+        if(position == -2) {
+            val intent = Intent(this, SettingActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK + Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+        }
+        else {
+            if(prePos != position) {
+                if(prePos == -1) {
+                    if(isDarkMode)
+                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
+                    else
+                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
+                }
+                else {
+                    if(isDarkMode) {
+                        adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
+                    }
+                    else {
+                        adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
+                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
+                    }
+                }
+                prePos = position
+            }
+            else {
+                if(isDarkMode)
+                    adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+                else
+                    adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.background_field_con))
+                prePos = -1
+            }
+        }
     }
 
     override fun onUpdateSelection(oldSelStart: Int, oldSelEnd: Int, newSelStart: Int, newSelEnd: Int, candidatesStart: Int, candidatesEnd: Int) {
@@ -817,18 +844,10 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
         }
     }
-    private fun saveImage(bm: Bitmap) {
-        /*val resolver = applicationContext.contentResolver
-        val externalFilesDir = applicationContext.getExternalFilesDir("")
-        val relativeLocation: String = Environment.DIRECTORY_DCIM
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "123")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "")
-        }*/
-        val cw = ContextWrapper(applicationContext)
-        val directory: File = cw.getDir("imageDir", Context.MODE_PRIVATE)
-        val myPath = File(directory, "test1.png")
+    private fun saveImage(ba: ByteArray, path: File, name: String) {
+        //val cw = ContextWrapper(applicationContext)
+        //val directory: File = cw.getDir("imageDir", Context.MODE_PRIVATE)
+        /*val myPath = File(path, name)
         var fos: FileOutputStream? = null
         try {
             fos = FileOutputStream(myPath)
@@ -844,17 +863,56 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             catch (e: IOException) {
                 e.printStackTrace()
             }
+        }*/
+        val myPath = File(path, name)
+        var fos: FileOutputStream? = null
+        try {
+            fos = FileOutputStream(myPath)
+            fos.write(ba)
+        }
+        catch (e: Exception) {
+            e.printStackTrace()
+        }
+        finally {
+            try {
+                fos!!.close()
+            }
+            catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
     }
 
-    private fun loadImage(path: File, imageView: ImageView) {
-        try {
-            val f = File(path, "test1.png")
-            val b = BitmapFactory.decodeStream(FileInputStream(f))
-            imageView.setImageBitmap(b)
+    private fun loadPNG(path: File, name: String): Bitmap? {
+        return try {
+            val f = File(path, name)
+            val b = f.readBytes()
+            BitmapFactory.decodeByteArray(b, 0, b.size)
+
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun loadGIF(path: File, name: String): GifDrawable? {
+        return try {
+            val f = File(path, name)
+            val b = f.readBytes()
+            GifDrawable(b)
         }
         catch (e: FileNotFoundException) {
             e.printStackTrace()
+            null
         }
+    }
+
+    private fun getPath(conNum: String): File {
+        val directory = ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE)
+        val file = File(directory, conNum)
+        if(!file.exists()) {
+            file.mkdir()
+        }
+        return file
     }
 }
