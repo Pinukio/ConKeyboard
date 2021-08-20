@@ -50,4 +50,13 @@ private val itemList: ArrayList<View> = ArrayList()
             return itemView
         }
     }
+
+    fun setData(bitmapList: ArrayList<Bitmap?>, titleList: ArrayList<String>, artistList: ArrayList<String>) {
+        bitmapArrayList.clear()
+        bitmapArrayList.addAll(bitmapList)
+        titleArrayList.clear()
+        titleArrayList.addAll(titleList)
+        artistArrayList.clear()
+        artistArrayList.addAll(artistList)
+    }
 }

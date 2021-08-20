@@ -20,20 +20,19 @@ class ConFieldAdapter(private val bitmapArrayList: ArrayList<Bitmap?>, private v
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = (holder as MyViewHolder).conImg
-        val index = position - 1
         item.setPadding(w)
         item.setOnClickListener {
-            if(position == 0)
+            if(position == bitmapArrayList.size)
                 listener.onClick(-2)
             else
                 listener.onClick(position)
         }
-        if(position == 0) {
+        if(position == bitmapArrayList.size) {
             item.setImageResource(R.drawable.settings_black)
         }
         else {
-            if(bitmapArrayList[index] != null) {
-                item.setImageBitmap(bitmapArrayList[index])
+            if(bitmapArrayList[position] != null) {
+                item.setImageBitmap(bitmapArrayList[position])
             }
         }
     }
@@ -49,6 +48,6 @@ class ConFieldAdapter(private val bitmapArrayList: ArrayList<Bitmap?>, private v
         }
     }
     fun setTitleConColor(position: Int, color: Int) {
-        (itemList[position] as CardView).setCardBackgroundColor(color)
+        (itemList[position] as CardView).setCardBackgroundColor(color) //포지션이 뭔가 이상함
     }
 }

@@ -19,6 +19,7 @@ import java.lang.Exception
 import java.net.URL
 
 class MainActivity : AppCompatActivity(), OnItemClick {
+    private lateinit var adapter: ShopAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding = ActivityMainBinding.inflate(layoutInflater)
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity(), OnItemClick {
             for(i in haveConNumList.indices) {
                 bitmapArrayList.add(loadPNG(getPath(haveConNumList[i]), "title.jpg"))
             }
-            val adapter = ShopAdapter(bitmapArrayList, haveConTitleList!!, haveConArtistList!!, this, haveConNumList)
+            adapter = ShopAdapter(bitmapArrayList, haveConTitleList!!, haveConArtistList!!, this, haveConNumList)
             binding.recyclerConsHave.adapter = adapter
         }
 
@@ -154,23 +155,19 @@ class MainActivity : AppCompatActivity(), OnItemClick {
         startActivity(intent)
     }
 
-    private fun saveImage(ba: ByteArray, path: File, name: String) {
-        val myPath = File(path, name)
-        var fos: FileOutputStream? = null
-        try {
-            fos = FileOutputStream(myPath)
-            fos.write(ba)
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }
-        finally {
-            try {
-                fos!!.close()
+    override fun onResume() {
+        super.onResume()
+        val pm = PreferenceManager()
+        val haveConNumList = pm.getConNumList(applicationContext, "have")
+        val haveConTitleList = pm.getConTitleList(applicationContext, "have")
+        val haveConArtistList = pm.getConArtistList(applicationContext, "have")
+        val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
+        if(haveConNumList != null) {
+            for(i in haveConNumList.indices) {
+                bitmapArrayList.add(loadPNG(getPath(haveConNumList[i]), "title.jpg"))
             }
-            catch (e: IOException) {
-                e.printStackTrace()
-            }
+            adapter.setData(bitmapArrayList, haveConTitleList!!, haveConArtistList!!)
+            adapter.notifyDataSetChanged()
         }
     }
 }

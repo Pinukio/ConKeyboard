@@ -28,21 +28,7 @@
                 android:id="@+id/recycler_title_cons"
                 android:layout_weight="8.99"
                 android:orientation="horizontal"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                app:stackFromEnd="true"
-                app:reverseLayout="true"/>
-
-            <!--<EditText
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:visibility="visible"
-                android:layout_weight="8.99"
-                android:id="@+id/field_search"
-                android:hint="검색"
-                android:imeOptions="actionGo"
-                android:background="@drawable/field_search"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"/>-->
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
             <View
                 android:layout_width="0dp"
@@ -54,14 +40,13 @@
                 android:layout_marginStart="1dp"
                 android:layout_marginEnd="1dp"/>
 
-            <pl.droidsonroids.gif.GifImageView
+            <ImageView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:src="@drawable/img_con"
                 android:scaleType="fitCenter"
                 android:id="@+id/btn_con_shop"
-                android:layout_weight="1"
-                />
+                android:layout_weight="1"/>
 
         </LinearLayout>
 
@@ -70,7 +55,15 @@
             android:layout_width="match_parent"
             layout="@layout/layout_keys_portrait"
             android:id="@+id/layout_keyboard_portrait"
-            android:layout_weight="5"/>
+            android:layout_weight="5"
+            android:visibility="visible"/>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="5"
+            android:visibility="gone"
+            android:id="@+id/viewpager" />
 
     </LinearLayout>
 

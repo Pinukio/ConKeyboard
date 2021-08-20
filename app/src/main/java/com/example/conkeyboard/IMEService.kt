@@ -1,5 +1,6 @@
 package com.example.conkeyboard
 
+import android.content.ClipDescription
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -9,7 +10,9 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
+import android.net.Uri
 import android.os.*
+import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
@@ -18,8 +21,13 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.*
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
+import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.github.kimkevin.hangulparser.HangulParser
 import com.github.kimkevin.hangulparser.HangulParserException
 import pl.droidsonroids.gif.GifDrawable
@@ -57,7 +65,10 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private val spCharList: List<String> = listOf("+", "×", "÷", "=", "/", "_", "<", ">", "♡", "☆", "!", "@", "#", "%", "^", "&", "*", "(", ")", "~", "-", "\'", "\"", ":", ";", ",", "?", "￦", "\\", "|", "♤", "♧", "{", "}", "[", "]", "`", "•", "○", "●", "□", "■", "◇", "\$", "€", "£", "¥", "°", "《", "》", "¡", "¿")
     private var isKoreanInputting: Boolean = false
     private lateinit var adapter: ConFieldAdapter
-    private var prePos: Int = -1
+    private var pos: Int = -1
+    private lateinit var keysLayout: LinearLayout
+    private lateinit var viewPager: ViewPager2
+    private lateinit var recycler: RecyclerView
 
     override fun onCreateInputView(): View {
         val height = resources.displayMetrics.heightPixels
@@ -65,7 +76,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         val w = width / 200
         val h = height / 200
         val keyboardView: View
-        val keysLayout: LinearLayout
         val isPortrait: Boolean
 
         if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -177,17 +187,21 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         if(shiftFlag != 0)
             changeShiftFlag(shiftFlag)
 
-        //val url = URL("https://dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b65eef226e7d0ad0c9f0461fd81612450d300b20c302d43050b1f8de8244bc74a859b08baf052b19a0228134314a")
-        //val byteArray = ConvertToByteArrayTask().execute(listOf(url)).get()[0]!!
-        //shopBtn.setImageDrawable(GifDrawable(byteArray))
-        //saveImage(byteArray, getPath("123"), "icon_4.gif")
-        //val ba = loadGIF(getPath("123"), "icon_4.gif")
-        val ba = File(getPath("123"), "icon_2.gif").readBytes()
-        val type = URLConnection.guessContentTypeFromStream(ByteArrayInputStream(ba)) //"image/gif, image/png
+        recycler = keyboardView.findViewById(R.id.recycler_title_cons)
+        viewPager = keyboardView.findViewById(R.id.viewpager)
+        //val viewPagerAdapter = ViewPagerAdapter()
 
-        val recycler: RecyclerView = keyboardView.findViewById(R.id.recycler_title_cons)
+        return keyboardView
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+
         val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
         val useConArrayList: ArrayList<String>? = PreferenceManager().getConNumList(applicationContext, "use")
+        val isPortrait: Boolean = (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+        val width = resources.displayMetrics.widthPixels
+        val w = width / 200
 
         if(useConArrayList != null) {
             for(i in useConArrayList.indices) {
@@ -198,13 +212,20 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
                     else ConFieldAdapter(bitmapArrayList, this, w)
 
             recycler.adapter = adapter
-        }   
+        }
 
-        return keyboardView
-    }
+        if(pos != -1) {
+            keysLayout.visibility = View.VISIBLE
+            viewPager.visibility = View.GONE
+            if(isDarkMode) {
+                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+            }
+            else {
+                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
+            }
+            pos = -1
+        }
 
-    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
-        super.onStartInputView(info, restarting)
         if(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES) {
             changeToDarkTheme()
             isDarkMode = true
@@ -804,31 +825,95 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             startActivity(intent)
         }
         else {
-            if(prePos != position) {
-                if(prePos == -1) {
-                    if(isDarkMode)
-                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
-                    else
-                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
-                }
-                else {
-                    if(isDarkMode) {
-                        adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
-                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
+            var prePos = pos
+            if(pos == -1) {
+                pos = position
+                keysLayout.visibility = View.GONE
+                viewPager.visibility = View.VISIBLE
+                val useConNumList: List<String> = PreferenceManager().getConNumList(applicationContext, "use")!!
+                val viewPagerAdapter = ViewPagerAdapter(useConNumList, this, applicationContext)
+                viewPager.adapter = viewPagerAdapter
+                viewPager.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
+                    override fun onPageSelected(posi: Int) {
+                        super.onPageSelected(posi)
+                        prePos = pos
+                        pos = posi
+
+                        if(prePos == -1) {
+                            if(isDarkMode) {
+                                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
+                            }
+                            else {
+                                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
+                            }
+                        }
+                        else {
+                            if(isDarkMode) {
+                                adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+                                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.title_con_clicked_dark))
+                            }
+                            else {
+                                adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
+                                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
+                            }
+                        }
                     }
-                    else {
-                        adapter.setTitleConColor(prePos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
-                        adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.title_con_clicked))
-                    }
-                }
-                prePos = position
+                })
+                viewPager.setCurrentItem(pos, false)
             }
             else {
-                if(isDarkMode)
-                    adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
-                else
-                    adapter.setTitleConColor(position, ContextCompat.getColor(applicationContext, R.color.background_field_con))
-                prePos = -1
+                if(pos == position) {
+                    if(isDarkMode)
+                        adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+                    else
+                        adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
+                    pos = -1
+                    viewPager.visibility = View.GONE
+                    keysLayout.visibility = View.VISIBLE
+                }
+                else {
+                    viewPager.setCurrentItem(position, false)
+                }
+            }
+
+        }
+    }
+
+    override fun onConClick(conNum: String, conName: String) {
+        val mimeTypes: Array<String> = EditorInfoCompat.getContentMimeTypes(currentInputEditorInfo)
+
+        when(conName.substring(conName.length - 3, conName.length)) {
+            "png" -> {
+                val pngSupported: Boolean = ("image/png" in mimeTypes) or ("image/*" in mimeTypes)
+
+                if(pngSupported) {
+                    commitPNG(conNum, conName)
+                }
+                else {
+                    Toast.makeText(applicationContext, "이미지를 어디로 보낼까요?", Toast.LENGTH_SHORT).show()
+                    val path = (File(getPath(conNum), conName))
+                    val uri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".fileprovider", path)
+                    val intent = Intent(this, ShareActivity::class.java)
+                    intent.putExtra("uri", uri.toString())
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK + Intent.FLAG_ACTIVITY_CLEAR_TASK + Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    startActivity(intent)
+                }
+            }
+            "gif" -> {
+                val gifSupported: Boolean = ("image/gif" in mimeTypes) or ("image/*" in mimeTypes)
+
+                if(gifSupported) {
+                    commitGIF(conNum, conName)
+                }
+                else {
+                    Toast.makeText(applicationContext, "이미지를 어디로 보낼까요?", Toast.LENGTH_SHORT).show()
+                    val path = (File(getPath(conNum), conName))
+                    val uri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".fileprovider", path)
+                    val intent = Intent(this, ShareActivity::class.java)
+                    intent.putExtra("uri", uri.toString())
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK + Intent.FLAG_ACTIVITY_CLEAR_TASK + Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    startActivity(intent)
+                }
             }
         }
     }
@@ -915,4 +1000,31 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         }
         return file
     }
+
+    private fun commitPNG(conNum: String, conName: String) {
+        val path = (File(getPath(conNum), conName))
+        val uri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".fileprovider", path)
+        val inputContentInfo = InputContentInfoCompat(
+            uri,
+            ClipDescription("dccon", arrayOf("image/png")),
+            null
+        )
+        var flags = 0
+        flags = flags or InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION
+        InputConnectionCompat.commitContent(currentInputConnection, currentInputEditorInfo, inputContentInfo, flags, null)
+    }
+
+    private fun commitGIF( conNum: String, conName: String) {
+        val path = (File(getPath(conNum), conName))
+        val uri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".fileprovider", path)
+        val inputContentInfo = InputContentInfoCompat(
+            uri,
+            ClipDescription("dccon", arrayOf("image/gif")),
+            null
+        )
+        var flags = 0
+        flags = flags or InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION
+        InputConnectionCompat.commitContent(currentInputConnection, currentInputEditorInfo, inputContentInfo, flags, null)
+    }
+
 }

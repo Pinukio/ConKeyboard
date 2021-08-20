@@ -28,9 +28,7 @@
                 android:id="@+id/recycler_title_cons"
                 android:orientation="horizontal"
                 android:layout_weight="8.99"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                app:stackFromEnd="true"
-                app:reverseLayout="true"/>
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
             <View
                 android:layout_width="0dp"
@@ -73,6 +71,13 @@
                 android:layout_weight="1.5"
                 android:visibility="invisible"/>
         </LinearLayout>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="5"
+            android:visibility="gone"
+            android:id="@+id/viewpager" />
 
     </LinearLayout>
 

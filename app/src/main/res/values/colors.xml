@@ -22,4 +22,5 @@
     <color name="transparent">#00FFFFFF</color>
     <color name="title_con_clicked">#CACACA</color>
     <color name="title_con_clicked_dark">#3D3D3D</color>
+    <color name="black_transparent">#7C000000</color>
 </resources>

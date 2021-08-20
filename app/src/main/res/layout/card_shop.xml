@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/background_card_shop"
-        android:padding="10dp">
+        android:padding="10dp"
+        android:layout_marginEnd="10dp">
 
         <ImageView
             android:layout_width="wrap_content"

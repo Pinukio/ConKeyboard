@@ -273,7 +273,6 @@ class ConInfoActivity: AppCompatActivity() {
             }
             catch (e: Exception) {
                 e.printStackTrace()
-                Log.i("helll", name.toString())
             }
         }
     }
@@ -317,10 +316,14 @@ class ConInfoActivity: AppCompatActivity() {
             val haveConNameList = pm.getConNameList(applicationContext, "have")!!
             val haveConTitleList = pm.getConTitleList(applicationContext, "have")!!
             val haveConArtistList = pm.getConArtistList(applicationContext, "have")!!
-            haveConNumList.add(conNum)
+            /*haveConNumList.add(conNum)
             haveConNameList.add(conName)
             haveConTitleList.add(title)
-            haveConArtistList.add(artist)
+            haveConArtistList.add(artist)*/
+            haveConNumList.add(0, conNum)
+            haveConNameList.add(0, conName)
+            haveConTitleList.add(0, title)
+            haveConArtistList.add(0, artist)
 
             pm.setConNumList(applicationContext, haveConNumList, "have")
             pm.setConNameList(applicationContext, haveConNameList, "have")
@@ -332,10 +335,15 @@ class ConInfoActivity: AppCompatActivity() {
                 val useConNameList = pm.getConNameList(applicationContext, "use")!!
                 val useConTitleList = pm.getConTitleList(applicationContext, "use")!!
                 val useConArtistList = pm.getConArtistList(applicationContext, "use")!!
-                useConNumList.add(conNum)
+                /*useConNumList.add(conNum)
                 useConNameList.add(conName)
                 useConTitleList.add(title)
-                useConArtistList.add(artist)
+                useConArtistList.add(artist)*/
+
+                useConNumList.add(0, conNum)
+                useConNameList.add(0, conName)
+                useConTitleList.add(0, title)
+                useConArtistList.add(0, artist)
 
                 pm.setConNumList(applicationContext, useConNumList, "use")
                 pm.setConNameList(applicationContext, useConNameList, "use")

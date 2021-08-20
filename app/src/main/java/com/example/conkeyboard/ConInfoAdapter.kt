@@ -11,14 +11,13 @@ import pl.droidsonroids.gif.GifDrawable
 import java.lang.Exception
 import kotlin.math.ceil
 
-class ConInfoAdapter(private val imgList: ArrayList<Any?>, private val conNameList_: ArrayList<String>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ConInfoAdapter(private val imgList: ArrayList<Any?>, conNameList_: ArrayList<String>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 private val conNameList: List<String> = conNameList_.subList(1, conNameList_.size)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_info_con, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-
         val item1 = (holder as MyViewHolder).conImg1
         val item2 = holder.conImg2
         val item3 = holder.conImg3
