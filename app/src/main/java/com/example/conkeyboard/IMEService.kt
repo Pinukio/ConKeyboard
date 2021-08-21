@@ -217,12 +217,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         if(pos != -1) {
             keysLayout.visibility = View.VISIBLE
             viewPager.visibility = View.GONE
-            if(isDarkMode) {
-                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
-            }
-            else {
-                adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
-            }
             pos = -1
         }
 

@@ -1,11 +1,62 @@
 package com.example.conkeyboard
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.recyclerview.widget.ItemTouchHelper
+import com.example.conkeyboard.databinding.ActivitySettingBinding
+import java.io.File
+import java.io.FileNotFoundException
 
 class SettingActivity : AppCompatActivity() {
+    private lateinit var helper: ItemTouchHelper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_setting)
+        val binding = ActivitySettingBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val pm = PreferenceManager()
+        val useConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "use")
+        if(useConNumList != null) {
+            val useConNameList: ArrayList<ArrayList<String>> = pm.getConNameList(applicationContext, "use")!!
+            val useConTitleList: ArrayList<String> = pm.getConTitleList(applicationContext, "use")!!
+            val useConArtistList: ArrayList<String> = pm.getConArtistList(applicationContext, "use")!!
+            val bitmapList: ArrayList<Bitmap?> = ArrayList()
+            for(i in useConNumList.indices) {
+                bitmapList.add(loadPhoto(getPath(useConNumList[i]), "title.jpg"))
+            }
+            val callback = ItemMoveCallback(useConNumList, useConNameList, useConTitleList, useConArtistList, pm, applicationContext)
+            helper = ItemTouchHelper(callback)
+            helper.attachToRecyclerView(binding.recyclerSetting)
+            val adapter = SettingAdapter(bitmapList, useConTitleList, helper)
+            binding.recyclerSetting.adapter = adapter
+        }
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
+    }
+
+    private fun loadPhoto(path: File, name: String): Bitmap? {
+        return try {
+            val f = File(path, name)
+            val b = f.readBytes()
+            BitmapFactory.decodeByteArray(b, 0, b.size)
+
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun getPath(conNum: String): File {
+        val directory = ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE)
+        val file = File(directory, conNum)
+        if(!file.exists()) {
+            file.mkdir()
+        }
+        return file
     }
 }
