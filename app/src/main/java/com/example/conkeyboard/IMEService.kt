@@ -187,7 +187,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
 
         recycler = keyboardView.findViewById(R.id.recycler_title_cons)
         viewPager = keyboardView.findViewById(R.id.viewpager)
-        //val viewPagerAdapter = ViewPagerAdapter()
 
         return keyboardView
     }
@@ -202,13 +201,22 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         val width = resources.displayMetrics.widthPixels
         val w = width / 200
 
+        if(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES) {
+            changeToDarkTheme()
+            isDarkMode = true
+        }
+        else {
+            changeToLightTheme()
+            isDarkMode = false
+        }
+
         if(useConList != null) {
             for(i in useConList.indices) {
                 bitmapArrayList.add(loadPNG(getPath(useConList[i].conNum), "title.jpg"))
             }
             adapter =
-                    if(isPortrait) ConFieldAdapter(bitmapArrayList, this, w*4)
-                    else ConFieldAdapter(bitmapArrayList, this, w)
+                    if(isPortrait) ConFieldAdapter(bitmapArrayList, this, w*4, isDarkMode)
+                    else ConFieldAdapter(bitmapArrayList, this, (w*1.5).toInt(), isDarkMode)
 
             recycler.adapter = adapter
         }
@@ -219,14 +227,7 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             pos = -1
         }
 
-        if(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES) {
-            changeToDarkTheme()
-            isDarkMode = true
-        }
-        else {
-            changeToLightTheme()
-            isDarkMode = false
-        }
+
         editorInfo = info
         try {
             val str = (info!!.imeOptions.toString(16))
@@ -820,12 +821,14 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         else {
             var prePos = pos
             if(pos == -1) {
+                if(isDarkMode)
+                    layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
                 pos = position
                 keysLayout.visibility = View.GONE
                 viewPager.visibility = View.VISIBLE
                 //val useConNumList: List<String> = PreferenceManager().getConNumList(applicationContext, "use")!!
                 val useConList = PreferenceManager().getConList(applicationContext, "use")!!
-                val viewPagerAdapter = ViewPagerAdapter(useConList, this, applicationContext)
+                val viewPagerAdapter = ViewPagerAdapter(useConList, this, applicationContext, isDarkMode)
                 viewPager.adapter = viewPagerAdapter
                 viewPager.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(posi: Int) {
@@ -857,8 +860,10 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
             else {
                 if(pos == position) {
-                    if(isDarkMode)
+                    if(isDarkMode) {
                         adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con_dark))
+                        layout.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.black))
+                    }
                     else
                         adapter.setTitleConColor(pos, ContextCompat.getColor(applicationContext, R.color.background_field_con))
                     pos = -1

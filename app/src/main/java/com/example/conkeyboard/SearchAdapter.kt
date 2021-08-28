@@ -1,21 +1,17 @@
 package com.example.conkeyboard
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.net.URL
 import kotlin.math.ceil
 
 class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val itemList: ArrayList<ConData> = ArrayList()
     private val bitmapList: ArrayList<Bitmap?> = ArrayList()
-    //private var loadingFlag: Boolean = false
     private val TYPE_ITEM = 0
     private val TYPE_LOADING = 1
     private var itemRemained = true
@@ -41,9 +37,12 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
             val index: Int = position * 3
             val num: Int = itemList.size - index
 
-            if(num < 3) {
+            if(!itemRemained && num < 3) {
                 for(i in 0 until num) {
                     setItem(holder, i, bitmapList[index + i], itemList[index + i].title, itemList[index + i].artist, itemList[index + i].conNum)
+                }
+                for(i in num until 3) {
+                    setItem(holder, i, null, "", "", "")
                 }
             }
             else {
@@ -83,6 +82,7 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
     fun addItem(items: List<ConData>, bitmaps: List<Bitmap?>) {
         itemList.addAll(items)
         bitmapList.addAll(bitmaps)
+
     }
 
     fun resetItem() {
@@ -101,12 +101,23 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
         val viewList: List<View> = listOf(holder.view1, holder.view2, holder.view3)
 
         if(bitmap != null) {
+            viewList[position].visibility = View.VISIBLE
             imageViewList[position].setImageBitmap(bitmap)
             titleList[position].text = titleText
             artistList[position].text = artistText
             viewList[position].setOnClickListener {
                 listener.onClick(conNum)
             }
+        }
+        else {
+            if(titleText.isEmpty()) {
+                viewList[position].visibility = View.GONE
+            }
+            /*imageViewList[position].setImageBitmap(null)
+            titleList[position].text = ""
+            artistList[position].text = ""
+            */
+
         }
     }
 }

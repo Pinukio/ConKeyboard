@@ -11,15 +11,13 @@ import com.example.conkeyboard.databinding.ActivityMainBinding
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.lang.Exception
 import java.net.URL
+import java.net.URLConnection
 
 class MainActivity : AppCompatActivity(), OnItemClick {
-    private lateinit var adapter: ShopAdapter
+    private lateinit var haveConAdapter: ShopAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding = ActivityMainBinding.inflate(layoutInflater)
@@ -27,13 +25,13 @@ class MainActivity : AppCompatActivity(), OnItemClick {
 
         val pm = PreferenceManager()
         val haveConList = pm.getConList(applicationContext, "have")
-        val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
         if(haveConList != null) {
+            val bitmapList: ArrayList<Bitmap?> = ArrayList()
             for(i in haveConList.indices) {
-                bitmapArrayList.add(loadPNG(getPath(haveConList[i].conNum), "title.jpg"))
+                bitmapList.add(loadPNG(getPath(haveConList[i].conNum), "title.jpg"))
             }
-            adapter = ShopAdapter(bitmapArrayList, this, haveConList)
-            binding.recyclerConsHave.adapter = adapter
+            haveConAdapter = ShopAdapter(bitmapList, this, haveConList)
+            binding.recyclerConsHave.adapter = haveConAdapter
         }
 
         binding.btnSearch.setOnClickListener {
@@ -41,9 +39,7 @@ class MainActivity : AppCompatActivity(), OnItemClick {
             startActivity(intent)
         }
 
-        /*val retrofit = RetrofitConnection(applicationContext)
-        val dailyHitConCall: Call<List<ConData>> = retrofit.server.getDailyHitCons()
-        val weeklyHitConCall: Call<List<ConData>> = retrofit.server.getWeeklyHitCons()
+        val retrofit = RetrofitConnection(applicationContext)
         val newConCall: Call<List<ConData>> = retrofit.server.getNewCons()
 
         val listener: OnItemClick = this
@@ -52,26 +48,35 @@ class MainActivity : AppCompatActivity(), OnItemClick {
             override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
                 val dataList: List<ConData>? = response.body()
                 if(dataList != null) {
-                    bitmapArrayList.clear()
-                    val conNumList: ArrayList<String> = ArrayList()
+                    val bitmapList: ArrayList<Bitmap?> = ArrayList()
+                    val conList: ArrayList<ConInfo> = ArrayList()
+                    val conName: ArrayList<String> = ArrayList()
+                    val urlList = ArrayList<URL>()
                     for(i in dataList.indices) {
-                        val byteArray = ConvertToByteArrayTask().execute(listOf(URL(dataList[i].photo[0]))).get()[0]
-                        if (byteArray != null) {
-                            val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                            bitmapArrayList.add(bitmap)
-                        } else {
-                            bitmapArrayList.add(null)
-                        }
-                        conNumList.add(dataList[i].conNum)
+                        urlList.add(URL(dataList[i].photo[0]))
                     }
-                    val adapter = ShopAdapter(bitmapArrayList, listener, conNumList)
+                    val baList = ConvertToByteArrayTask().execute(urlList).get()
+                    if(baList != null) {
+                        for(i in baList.indices) {
+                            val byteArray = baList[i]
+                            if (byteArray != null) {
+                                val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                                bitmapList.add(bitmap)
+                            } else {
+                                bitmapList.add(null)
+                            }
+                            val con = ConInfo(dataList[i].title, dataList[i].artist, dataList[i].conNum, conName)
+                            conList.add(con)
+                        }
+                    }
+                    val adapter = ShopAdapter(bitmapList, listener, conList)
                     binding.recyclerConsNew.adapter = adapter
                 }
             }
 
             override fun onFailure(call: Call<List<ConData>>, t: Throwable) {
             }
-        })*/
+        })
     }
 
     private fun loadPNG(path: File, name: String): Bitmap? {
@@ -104,17 +109,14 @@ class MainActivity : AppCompatActivity(), OnItemClick {
     override fun onResume() {
         super.onResume()
         val pm = PreferenceManager()
-        /*val haveConNumList = pm.getConNumList(applicationContext, "have")
-        val haveConTitleList = pm.getConTitleList(applicationContext, "have")
-        val haveConArtistList = pm.getConArtistList(applicationContext, "have")*/
         val haveConList = pm.getConList(applicationContext, "have")
-        val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
         if(haveConList != null) {
+            val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
             for(i in haveConList.indices) {
                 bitmapArrayList.add(loadPNG(getPath(haveConList[i].conNum), "title.jpg"))
             }
-            adapter.setData(bitmapArrayList, haveConList)
-            adapter.notifyDataSetChanged()
+            haveConAdapter.setData(bitmapArrayList, haveConList)
+            haveConAdapter.notifyDataSetChanged()
         }
     }
     private fun saveImage(ba: ByteArray, path: File, name: String) {

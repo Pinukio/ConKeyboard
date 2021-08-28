@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:weightSum="10"
         android:orientation="horizontal"
-        android:background="@color/background_gray">
+        android:background="@color/background_field_con_dark">
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"

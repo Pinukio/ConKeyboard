@@ -11,6 +11,6 @@ interface RetrofitInterface {
     @POST("/dccon")
     fun getOneCon(@Body json: JsonForOneCon): Call<ConData>
 
-    @POST("/new")
+    @POST("/newcon")
     fun getNewCons(): Call<List<ConData>>
 }

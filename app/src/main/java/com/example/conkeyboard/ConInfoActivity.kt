@@ -39,7 +39,6 @@ class ConInfoActivity: AppCompatActivity() {
 
         val intent = intent
         val conNum: String? = intent.getStringExtra("conNum")
-        val url: String? = intent.getStringExtra("url")
         val pm = PreferenceManager()
         //val haveConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "have")
         val haveConList: ArrayList<ConInfo>? = pm.getConList(applicationContext, "have")
@@ -57,18 +56,11 @@ class ConInfoActivity: AppCompatActivity() {
             }
         }
         if(isConDownloaded) {
-            /*val haveConNameList: ArrayList<ArrayList<String>> = pm.getConNameList(applicationContext, "have")!!
-            val haveConTitleList: ArrayList<String> = pm.getConTitleList(applicationContext, "have")!!
-            val haveConArtistList: ArrayList<String> = pm.getConArtistList(applicationContext, "have")!!*/
-
             binding.thumbnail.setImageBitmap(loadPhoto(getPath(conNum!!), "title.jpg"))
-            //binding.textTitle.text = haveConTitleList[conNumIndex]
             binding.textTitle.text = haveConList!![conNumIndex].title
-            //binding.textArtist.text = haveConArtistList[conNumIndex]
             binding.textArtist.text = haveConList[conNumIndex].artist
 
             val imgList: ArrayList<Any?> = ArrayList()
-            //val conName = haveConNameList[(conNumIndex)]
             val conName = haveConList[conNumIndex].conName
             for(i in 1 until conName.size) {
                 when(conName[i].substring(conName[i].length - 3, conName[i].length)) {
@@ -125,7 +117,6 @@ class ConInfoActivity: AppCompatActivity() {
                 downloadManager(pm, haveConList[conNumIndex].title, conNum, photoName, haveConList[conNumIndex].artist)
                 binding.fieldProgressDownload.visibility = View.GONE
                 binding.fieldHaveCon.visibility = View.VISIBLE
-                //baList.clear()
                 Toast.makeText(applicationContext, "다운로드가 완료되었습니다.", Toast.LENGTH_SHORT).show()
             }
         }
@@ -133,7 +124,7 @@ class ConInfoActivity: AppCompatActivity() {
             binding.fieldHaveCon.visibility = View.GONE
             binding.btnDownload.visibility = View.VISIBLE
 
-            val retrofit = RetrofitConnection(applicationContext, url!!).server
+            val retrofit = RetrofitConnection(applicationContext).server
             val json = JsonForOneCon(conNum)
             val oneConCall: Call<ConData> = retrofit.getOneCon(json)
             oneConCall.enqueue(object : Callback<ConData> {
@@ -224,13 +215,6 @@ class ConInfoActivity: AppCompatActivity() {
                         }
 
                         binding.btnRemove.setOnClickListener {
-                            /*for(i in photoName.indices) {
-                                removeFile(getPath(data.conNum), photoName[i])
-                            }
-                            removeFile(ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE), conNum)
-                            removeManager(pm, 0, conNum)
-                            binding.fieldHaveCon.visibility = View.GONE
-                            binding.btnDownload.visibility = View.VISIBLE*/
                             alertDialog.show()
                         }
                     }
@@ -310,24 +294,10 @@ class ConInfoActivity: AppCompatActivity() {
     }
 
     private fun removeManager(pm: PreferenceManager, index: Int, conNum: String) {
-        /*val haveConNumList = pm.getConNumList(applicationContext, "have")!!
-        val haveConNameList = pm.getConNameList(applicationContext, "have")!!
-        val haveConTitleList = pm.getConTitleList(applicationContext, "have")!!
-        val haveConArtistList = pm.getConArtistList(applicationContext, "have")!!
-        haveConNumList.removeAt(index)
-        haveConNameList.removeAt(index)
-        haveConTitleList.removeAt(index)
-        haveConArtistList.removeAt(index)*/
         val haveConList = pm.getConList(applicationContext, "have")!!
         haveConList.removeAt(index)
-
-        /*pm.setConNumList(applicationContext, haveConNumList, "have")
-        pm.setConNameList(applicationContext, haveConNameList, "have")
-        pm.setConTitleList(applicationContext, haveConTitleList, "have")
-        pm.setConArtistList(applicationContext, haveConArtistList, "have")*/
         pm.setConList(applicationContext, haveConList, "have")
 
-        //val useConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "use")
         val useConList: ArrayList<ConInfo>? = pm.getConList(applicationContext, "use")
         if(useConList != null) {
             var isUseCon = false
@@ -339,114 +309,35 @@ class ConInfoActivity: AppCompatActivity() {
                 }
             }
             if(isUseCon) {
-                /*val useConNameList: ArrayList<ArrayList<String>> = pm.getConNameList(applicationContext, "use")!!
-                val useConTitleList: ArrayList<String> = pm.getConTitleList(applicationContext, "use")!!
-                val useConArtistList: ArrayList<String> = pm.getConArtistList(applicationContext, "use")!!*/
-                /*useConNumList.removeAt(useConNumIndex)
-                useConNameList.removeAt(useConNumIndex)
-                useConTitleList.removeAt(useConNumIndex)
-                useConArtistList.removeAt(useConNumIndex)*/
-                    useConList.removeAt(useConIndex)
-                /*pm.setConNumList(applicationContext, useConNumList, "use")
-                pm.setConNameList(applicationContext, useConNameList, "use")
-                pm.setConTitleList(applicationContext, useConTitleList, "use")
-                pm.setConArtistList(applicationContext, useConArtistList, "use")*/
+                useConList.removeAt(useConIndex)
                 pm.setConList(applicationContext, useConList, "use")
             }
         }
     }
 
     private fun downloadManager(pm: PreferenceManager, title: String, conNum: String, conName: ArrayList<String>, artist: String) {
-        //val haveConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "have")
         val haveConList: ArrayList<ConInfo>? = pm.getConList(applicationContext, "have")
         val con = ConInfo(title, artist, conNum, conName)
 
         if(haveConList != null) {
-            /*val haveConNameList = pm.getConNameList(applicationContext, "have")!!
-            val haveConTitleList = pm.getConTitleList(applicationContext, "have")!!
-            val haveConArtistList = pm.getConArtistList(applicationContext, "have")!!*/
-
-            /*haveConNumList.add(conNum)
-            haveConNameList.add(conName)
-            haveConTitleList.add(title)
-            haveConArtistList.add(artist)*/
-            /*haveConNumList.add(0, conNum)
-            haveConNameList.add(0, conName)
-            haveConTitleList.add(0, title)
-            haveConArtistList.add(0, artist)*/
-
-                haveConList.add(0, con)
-
-            /*pm.setConNumList(applicationContext, haveConNumList, "have")
-            pm.setConNameList(applicationContext, haveConNameList, "have")
-            pm.setConTitleList(applicationContext, haveConTitleList, "have")
-            pm.setConArtistList(applicationContext, haveConArtistList, "have")*/
+            haveConList.add(0, con)
             pm.setConList(applicationContext, haveConList, "have")
 
-            //val useConNumList = pm.getConNumList(applicationContext, "use")
             val useConList = pm.getConList(applicationContext, "use")
             if(useConList != null) {
-                /*val useConNameList = pm.getConNameList(applicationContext, "use")!!
-                val useConTitleList = pm.getConTitleList(applicationContext, "use")!!
-                val useConArtistList = pm.getConArtistList(applicationContext, "use")!!*/
-                /*useConNumList.add(conNum)
-                useConNameList.add(conName)
-                useConTitleList.add(title)
-                useConArtistList.add(artist)*/
-
-                /*useConNumList.add(0, conNum)
-                useConNameList.add(0, conName)
-                useConTitleList.add(0, title)
-                useConArtistList.add(0, artist)*/
-                    useConList.add(0, con)
-
-                /*pm.setConNumList(applicationContext, useConNumList, "use")
-                pm.setConNameList(applicationContext, useConNameList, "use")
-                pm.setConTitleList(applicationContext, useConTitleList, "use")
-                pm.setConArtistList(applicationContext, useConArtistList, "use")*/
+                useConList.add(0, con)
                 pm.setConList(applicationContext, useConList, "use")
             }
             else {
-                /*val conNumList = ArrayList<String>()
-                conNumList.add(conNum)
-                val conNameList = ArrayList<ArrayList<String>>()
-                conNameList.add(conName)
-                val conTitleList = ArrayList<String>()
-                conTitleList.add(title)
-                val conArtistList = ArrayList<String>()
-                conArtistList.add(artist)*/
-                    val conList = ArrayList<ConInfo>()
+                val conList = ArrayList<ConInfo>()
                 conList.add(con)
-
-                /*pm.setConNumList(applicationContext, conNumList, "use")
-                pm.setConNameList(applicationContext, conNameList, "use")
-                pm.setConTitleList(applicationContext, conTitleList, "use")
-                pm.setConArtistList(applicationContext, conArtistList, "use")*/
                 pm.setConList(applicationContext, conList, "use")
             }
         }
         else {
-            /*val conNumList = ArrayList<String>()
-            conNumList.add(conNum)
-            val conNameList = ArrayList<ArrayList<String>>()
-            conNameList.add(conName)
-            val conTitleList = ArrayList<String>()
-            conTitleList.add(title)
-            val conArtistList = ArrayList<String>()
-            conArtistList.add(artist)*/
             val conList = ArrayList<ConInfo>()
             conList.add(con)
-
-            /*pm.setConNumList(applicationContext, conNumList, "have")
-            pm.setConNameList(applicationContext, conNameList, "have")
-            pm.setConTitleList(applicationContext, conTitleList, "have")
-            pm.setConArtistList(applicationContext, conArtistList, "have")*/
             pm.setConList(applicationContext, conList, "have")
-
-            /*pm.setConNumList(applicationContext, conNumList, "use")
-            pm.setConNameList(applicationContext, conNameList, "use")
-            pm.setConTitleList(applicationContext, conTitleList, "use")
-            pm.setConArtistList(applicationContext, conArtistList, "use")*/
             pm.setConList(applicationContext, conList, "use")
         }
     }

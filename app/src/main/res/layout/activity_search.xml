@@ -51,52 +51,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@drawable/background_field_search"
-        android:layout_margin="20dp"
-        android:orientation="horizontal"
-        android:id="@+id/tmp">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:src="@drawable/arrow_left"
-            android:padding="15dp"
-            android:id="@+id/btn_back_"
-            app:layout_constraintStart_toStartOf="parent"
-            android:visibility="gone"/>
-
-        <EditText
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            app:layout_constraintStart_toEndOf="@id/btn_back_"
-            app:layout_constraintEnd_toStartOf="@id/btn_close_"
-            android:hint="링크 입력"
-            android:textColorHint="@color/button_gray"
-            android:background="@color/transparent"
-            android:textColor="@color/black"
-            android:theme="@style/EditTextStyle"
-            android:inputType="text"
-            android:id="@+id/edittext_link"
-            android:imeOptions="actionSearch"
-            android:layout_marginStart="20dp">
-        </EditText>
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:src="@drawable/close_black_small"
-            android:padding="15dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:id="@+id/btn_close_"
-            android:visibility="gone"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

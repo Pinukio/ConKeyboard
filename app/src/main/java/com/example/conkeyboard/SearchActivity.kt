@@ -29,7 +29,6 @@ import java.net.URL
 
 class SearchActivity : AppCompatActivity(), OnItemClick {
     private var totalList: List<ConData>? = null
-    private var url = ""
     private var remained = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,15 +36,7 @@ class SearchActivity : AppCompatActivity(), OnItemClick {
         setContentView(binding.root)
 
         var page = 0
-        binding.edittextLink.setOnEditorActionListener { textView, i, keyEvent ->
-            if(i == EditorInfo.IME_ACTION_SEARCH) {
-                if(textView.text.toString().isNotEmpty()) {
-                    url = textView.text.toString()
-                    binding.tmp.visibility = View.GONE
-                }
-            }
-            false
-        }
+
         binding.edittext.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -115,82 +106,78 @@ class SearchActivity : AppCompatActivity(), OnItemClick {
         }
         binding.edittext.setOnEditorActionListener { v, actionId, event ->
             if(actionId == EditorInfo.IME_ACTION_SEARCH) {
-                if(url.isEmpty())
-                    Toast.makeText(applicationContext, "링크를 입력해 주세요", Toast.LENGTH_SHORT).show()
+                if(v.text.length < 2) {
+                    alertDialog.show()
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(binding.edittext.windowToken, 0)
+                }
                 else {
-                    if(v.text.length < 2) {
-                        alertDialog.show()
-                        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(binding.edittext.windowToken, 0)
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(binding.edittext.windowToken, 0)
+
+                    if(binding.recyclerSearch.adapter != null) {
+                        adapter.resetItem()
+                        totalList = null
+                        remained = true
+                        adapter.setItemRemained(remained)
+                        binding.recyclerSearch.post { adapter.notifyDataSetChanged() }
+                        page = 0
                     }
                     else {
-                        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(binding.edittext.windowToken, 0)
+                        binding.recyclerSearch.adapter = adapter
+                        binding.recyclerSearch.addOnScrollListener(listener)
+                    }
 
-                        if(binding.recyclerSearch.adapter != null) {
-                            adapter.resetItem()
-                            totalList = null
-                            remained = true
-                            adapter.setItemRemained(remained)
-                            binding.recyclerSearch.post { adapter.notifyDataSetChanged() }
-                            page = 0
-                        }
-                        else {
-                            binding.recyclerSearch.adapter = adapter
-                            binding.recyclerSearch.addOnScrollListener(listener)
-                        }
+                    val retrofit = RetrofitConnection(applicationContext)
+                    val json = JsonForSearch(v.text.toString())
 
-                        val retrofit = RetrofitConnection(applicationContext, url)
-                        val json = JsonForSearch(v.text.toString())
-
-                        val searchedConsCall: Call<List<ConData>> = retrofit.server.getSearchedCons(json)
-                        searchedConsCall.enqueue(object: Callback<List<ConData>> {
-                            override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
-                                totalList = response.body()
-                                if(totalList != null && totalList!!.isNotEmpty()) {
-                                    if(totalList!!.size < 30)
-                                        adapter.setItemRemained(false)
-                                    val list = loadData(totalList!!, page)
-                                    val imgList: ArrayList<URL> = ArrayList()
-                                    for(i in list.indices) {
-                                        imgList.add(URL(list[i].photo[0]))
-                                    }
-                                    val baList = ConvertToByteArrayTask().execute(imgList).get()
-                                    if(baList != null) {
-                                        val bitmapList: ArrayList<Bitmap?> = ArrayList()
-                                        for(i in baList.indices) {
-                                            val ba = baList[i]
-                                            if(ba != null) {
-                                                bitmapList.add(BitmapFactory.decodeByteArray(ba, 0, ba.size))
-                                            }
-                                            else {
-                                                bitmapList.add(null)
-                                            }
-                                        }
-                                        adapter.addItem(list, bitmapList)
-                                        if(totalList!!.size < 30)
-                                            adapter.notifyItemRangeChanged(0, totalList!!.size)
-                                        else
-                                            adapter.notifyItemRangeChanged(0, 30)
-                                        page += 1
-
-                                    }
-                                }
-                                else if(totalList != null && totalList!!.isEmpty()) {
-                                    Toast.makeText(applicationContext, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
+                    val searchedConsCall: Call<List<ConData>> = retrofit.server.getSearchedCons(json)
+                    searchedConsCall.enqueue(object: Callback<List<ConData>> {
+                        override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
+                            totalList = response.body()
+                            if(totalList != null && totalList!!.isNotEmpty()) {
+                                if(totalList!!.size < 30)
                                     adapter.setItemRemained(false)
-                                    binding.recyclerSearch.post{ adapter.notifyDataSetChanged() }
+                                val list = loadData(totalList!!, page)
+                                val imgList: ArrayList<URL> = ArrayList()
+                                for(i in list.indices) {
+                                    imgList.add(URL(list[i].photo[0]))
+                                }
+                                val baList = ConvertToByteArrayTask().execute(imgList).get()
+                                if(baList != null) {
+                                    val bitmapList: ArrayList<Bitmap?> = ArrayList()
+                                    for(i in baList.indices) {
+                                        val ba = baList[i]
+                                        if(ba != null) {
+                                            bitmapList.add(BitmapFactory.decodeByteArray(ba, 0, ba.size))
+                                        }
+                                        else {
+                                            bitmapList.add(null)
+                                        }
+                                    }
+                                    adapter.addItem(list, bitmapList)
+                                    if(totalList!!.size < 30)
+                                        adapter.notifyItemRangeChanged(0, totalList!!.size)
+                                    else
+                                        adapter.notifyItemRangeChanged(0, 30)
+                                    page += 1
 
                                 }
                             }
-
-                            override fun onFailure(call: Call<List<ConData>>, t: Throwable) {
-                                Toast.makeText(applicationContext, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                            else if(totalList != null && totalList!!.isEmpty()) {
+                                Toast.makeText(applicationContext, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
                                 adapter.setItemRemained(false)
                                 binding.recyclerSearch.post{ adapter.notifyDataSetChanged() }
+
                             }
-                        })
-                    }
+                        }
+
+                        override fun onFailure(call: Call<List<ConData>>, t: Throwable) {
+                            Toast.makeText(applicationContext, "검색 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                            adapter.setItemRemained(false)
+                            binding.recyclerSearch.post{ adapter.notifyDataSetChanged() }
+                        }
+                    })
                 }
             }
             false
@@ -214,7 +201,6 @@ class SearchActivity : AppCompatActivity(), OnItemClick {
     override fun onClick(conNum: String) {
         val intent = Intent(this, ConInfoActivity::class.java)
         intent.putExtra("conNum", conNum)
-        intent.putExtra("url", url)
         startActivity(intent)
     }
 }

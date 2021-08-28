@@ -41,6 +41,9 @@ class ConInfoAdapter(private val imgList_: ArrayList<Any?>, conNameList_: ArrayL
                     }
                 }
             }
+            for(i in num until 3) {
+                itemList[i].setImageBitmap(null)
+            }
         }
         else {
             for(i in 0..2) {

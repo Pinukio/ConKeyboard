@@ -7,15 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
-class ViewPagerAdapter(private val useConList: List<ConInfo>, private val listener: OnItemClick, private val context: Context): RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder>(){
-    private val pm: PreferenceManager = PreferenceManager()
+class ViewPagerAdapter(private val useConList: List<ConInfo>, private val listener: OnItemClick, private val context: Context, private val isDarkMode: Boolean): RecyclerView.Adapter<ViewPagerAdapter.PagerViewHolder>(){
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PagerViewHolder {
         return PagerViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.layout_viewpager, parent, false))
     }
 
     override fun onBindViewHolder(holder: PagerViewHolder, position: Int) {
-        val adapter = UseConAdapter(useConList[position].conName, useConList[position].conNum, listener, context)
+        val adapter = UseConAdapter(useConList[position].conName, useConList[position].conNum, listener, context, isDarkMode)
         holder.recyclerView.adapter = adapter
     }
 

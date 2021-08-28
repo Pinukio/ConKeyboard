@@ -9,18 +9,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import pl.droidsonroids.gif.GifDrawable
 import java.io.File
 import java.io.FileNotFoundException
 import kotlin.math.ceil
 
-class UseConAdapter(useConNameList: List<String>, private val conNum: String, private val listener: OnItemClick, private val context: Context): RecyclerView.Adapter<UseConAdapter.MyViewHolder>() {
+class UseConAdapter(useConNameList: List<String>, private val conNum: String, private val listener: OnItemClick, private val context: Context, private val isDarkMode: Boolean): RecyclerView.Adapter<UseConAdapter.MyViewHolder>() {
     private val conName: List<String> = useConNameList.subList(1, useConNameList.size)
     private val imgList: ArrayList<Any?> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        return MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_con_use, parent, false))
+        return if(isDarkMode) MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_con_use_dark, parent, false))
+        else MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_con_use, parent, false))
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
@@ -49,6 +52,9 @@ class UseConAdapter(useConNameList: List<String>, private val conNum: String, pr
                     if(img != null)
                         listener.onConClick(conNum, conName[index + i])
                 }
+            }
+            for(i in num until 4) {
+                imageViewList[i].setImageBitmap(null)
             }
         }
         else {
