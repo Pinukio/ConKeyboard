@@ -1,7 +1,6 @@
 package com.example.conkeyboard
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,7 @@ import pl.droidsonroids.gif.GifDrawable
 import java.lang.Exception
 import kotlin.math.ceil
 
-class ConInfoAdapter(private val imgList_: ArrayList<Any?>, conNameList_: ArrayList<String>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ConInfoAdapter(imgList_: ArrayList<Any?>, conNameList_: ArrayList<String>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val conNameList: List<String> = conNameList_.subList(1, conNameList_.size)
     private val imgList: List<Any?> = imgList_.subList(1, imgList_.size)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

@@ -1,7 +1,6 @@
 package com.example.conkeyboard
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View

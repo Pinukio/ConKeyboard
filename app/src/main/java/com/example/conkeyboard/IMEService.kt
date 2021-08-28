@@ -10,11 +10,8 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
-import android.net.Uri
 import android.os.*
-import android.provider.MediaStore
 import android.text.TextUtils
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -28,12 +25,8 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import pl.droidsonroids.gif.GifDrawable
-import pl.droidsonroids.gif.GifImageView
 import java.io.*
 import java.lang.Exception
-import java.net.URL
-import java.net.URLConnection
 
 class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
     private lateinit var btnArray: ArrayList<Button>
@@ -195,7 +188,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         super.onStartInputView(info, restarting)
 
         val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
-        //val useConArrayList: ArrayList<String>? = PreferenceManager().getConNumList(applicationContext, "use")
         val useConList = PreferenceManager().getConList(applicationContext, "use")
         val isPortrait: Boolean = (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
         val width = resources.displayMetrics.widthPixels
@@ -826,7 +818,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
                 pos = position
                 keysLayout.visibility = View.GONE
                 viewPager.visibility = View.VISIBLE
-                //val useConNumList: List<String> = PreferenceManager().getConNumList(applicationContext, "use")!!
                 val useConList = PreferenceManager().getConList(applicationContext, "use")!!
                 val viewPagerAdapter = ViewPagerAdapter(useConList, this, applicationContext, isDarkMode)
                 viewPager.adapter = viewPagerAdapter
@@ -928,44 +919,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             }
         }
     }
-    private fun saveImage(ba: ByteArray, path: File, name: String) {
-        //val cw = ContextWrapper(applicationContext)
-        //val directory: File = cw.getDir("imageDir", Context.MODE_PRIVATE)
-        /*val myPath = File(path, name)
-        var fos: FileOutputStream? = null
-        try {
-            fos = FileOutputStream(myPath)
-            bm.compress(Bitmap.CompressFormat.PNG, 100, fos)
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }
-        finally {
-            try {
-                fos!!.close()
-            }
-            catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }*/
-        val myPath = File(path, name)
-        var fos: FileOutputStream? = null
-        try {
-            fos = FileOutputStream(myPath)
-            fos.write(ba)
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }
-        finally {
-            try {
-                fos!!.close()
-            }
-            catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-    }
 
     private fun loadPNG(path: File, name: String): Bitmap? {
         return try {
@@ -974,18 +927,6 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
             BitmapFactory.decodeByteArray(b, 0, b.size)
 
         } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    private fun loadGIF(path: File, name: String): GifDrawable? {
-        return try {
-            val f = File(path, name)
-            val b = f.readBytes()
-            GifDrawable(b)
-        }
-        catch (e: FileNotFoundException) {
             e.printStackTrace()
             null
         }

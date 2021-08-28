@@ -6,17 +6,14 @@ import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.conkeyboard.databinding.ActivityInfoConBinding
 import pl.droidsonroids.gif.GifDrawable
-import pl.droidsonroids.gif.GifImageView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -40,14 +37,12 @@ class ConInfoActivity: AppCompatActivity() {
         val intent = intent
         val conNum: String? = intent.getStringExtra("conNum")
         val pm = PreferenceManager()
-        //val haveConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "have")
         val haveConList: ArrayList<ConInfo>? = pm.getConList(applicationContext, "have")
         var isConDownloaded = false
         var conNumIndex: Int = 0
         setThumbnailSize(binding.thumbnail)
 
         if(conNum != null && haveConList != null) {
-            //isConDownloaded = conNum in haveConList
             haveConList.forEachIndexed { index, conInfo ->
                 if(conInfo.conNum == conNum) {
                     isConDownloaded = true
@@ -83,7 +78,6 @@ class ConInfoActivity: AppCompatActivity() {
                         for(i in conName.indices) {
                             removeFile(getPath(conNum), conName[i])
                         }
-                        //removeFile(getPath(conNum), "title.jpg")
                         removeFile(ContextWrapper(applicationContext).getDir("imageDir", Context.MODE_PRIVATE), conNum)
                         removeManager(pm, conNumIndex, conNum)
                         binding.fieldHaveCon.visibility = View.GONE

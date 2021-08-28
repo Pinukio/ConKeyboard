@@ -1,16 +1,11 @@
 package com.example.conkeyboard
 
-import android.app.Activity
-import android.content.Intent
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.cardview.widget.CardView
-import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
 
 class ShopAdapter(private val bitmapList: ArrayList<Bitmap?>,  private val listener: OnItemClick, private val conList: ArrayList<ConInfo>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {

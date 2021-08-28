@@ -1,7 +1,6 @@
 package com.example.conkeyboard
 
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,6 +51,6 @@ class ConFieldAdapter(private val bitmapArrayList: ArrayList<Bitmap?>, private v
         }
     }
     fun setTitleConColor(position: Int, color: Int) {
-        (itemList[position] as CardView).setCardBackgroundColor(color) //포지션이 뭔가 이상함
+        (itemList[position] as CardView).setCardBackgroundColor(color)
     }
 }

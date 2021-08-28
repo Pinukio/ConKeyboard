@@ -113,11 +113,6 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
             if(titleText.isEmpty()) {
                 viewList[position].visibility = View.GONE
             }
-            /*imageViewList[position].setImageBitmap(null)
-            titleList[position].text = ""
-            artistList[position].text = ""
-            */
-
         }
     }
 }

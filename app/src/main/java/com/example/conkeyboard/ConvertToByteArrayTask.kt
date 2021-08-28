@@ -1,15 +1,8 @@
 package com.example.conkeyboard
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.drawable.Drawable
 import android.os.AsyncTask
-import pl.droidsonroids.gif.GifDrawable
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
 

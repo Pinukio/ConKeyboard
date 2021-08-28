@@ -14,7 +14,6 @@ import retrofit2.Response
 import java.io.*
 import java.lang.Exception
 import java.net.URL
-import java.net.URLConnection
 
 class MainActivity : AppCompatActivity(), OnItemClick {
     private lateinit var haveConAdapter: ShopAdapter
