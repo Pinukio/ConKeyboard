@@ -28,8 +28,6 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.github.kimkevin.hangulparser.HangulParser
-import com.github.kimkevin.hangulparser.HangulParserException
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.*
@@ -198,14 +196,15 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
         super.onStartInputView(info, restarting)
 
         val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
-        val useConArrayList: ArrayList<String>? = PreferenceManager().getConNumList(applicationContext, "use")
+        //val useConArrayList: ArrayList<String>? = PreferenceManager().getConNumList(applicationContext, "use")
+        val useConList = PreferenceManager().getConList(applicationContext, "use")
         val isPortrait: Boolean = (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
         val width = resources.displayMetrics.widthPixels
         val w = width / 200
 
-        if(useConArrayList != null) {
-            for(i in useConArrayList.indices) {
-                bitmapArrayList.add(loadPNG(getPath(useConArrayList[i]), "title.jpg"))
+        if(useConList != null) {
+            for(i in useConList.indices) {
+                bitmapArrayList.add(loadPNG(getPath(useConList[i].conNum), "title.jpg"))
             }
             adapter =
                     if(isPortrait) ConFieldAdapter(bitmapArrayList, this, w*4)
@@ -824,8 +823,9 @@ class IMEService : InputMethodService(), View.OnTouchListener, OnItemClick {
                 pos = position
                 keysLayout.visibility = View.GONE
                 viewPager.visibility = View.VISIBLE
-                val useConNumList: List<String> = PreferenceManager().getConNumList(applicationContext, "use")!!
-                val viewPagerAdapter = ViewPagerAdapter(useConNumList, this, applicationContext)
+                //val useConNumList: List<String> = PreferenceManager().getConNumList(applicationContext, "use")!!
+                val useConList = PreferenceManager().getConList(applicationContext, "use")!!
+                val viewPagerAdapter = ViewPagerAdapter(useConList, this, applicationContext)
                 viewPager.adapter = viewPagerAdapter
                 viewPager.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(posi: Int) {

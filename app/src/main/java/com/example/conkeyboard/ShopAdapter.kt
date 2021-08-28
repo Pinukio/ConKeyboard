@@ -12,7 +12,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
 
-class ShopAdapter(private val bitmapArrayList: ArrayList<Bitmap?>, private val titleArrayList: ArrayList<String>, private val artistArrayList: ArrayList<String>, private val listener: OnItemClick, private val conNumList: List<String>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ShopAdapter(private val bitmapArrayList: ArrayList<Bitmap?>,  private val listener: OnItemClick, private val conList: ArrayList<ConInfo>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 private val itemList: ArrayList<View> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -25,16 +25,18 @@ private val itemList: ArrayList<View> = ArrayList()
         val item = itemList[position]
         if(bitmapArrayList[position] != null) {
             (holder as MyViewHolder).conImg.setImageBitmap(bitmapArrayList[position])
-            val titleText = titleArrayList[position]
-            val artistText = artistArrayList[position]
-            if(titleText.length < 10) holder.title.text = titleText
-            else holder.title.text = titleText.substring(0, 9)
+            val titleText = conList[position].title
+            val artistText = conList[position].artist
+            /*if(titleText.length < 10) holder.title.text = titleText
+            else holder.title.text = titleText.substring(0, 9)*/
+            holder.title.text = titleText
 
-            if(artistText.length < 10) holder.artist.text = artistText
-            else holder.artist.text = artistText.substring(0, 9)
+            /*if(artistText.length < 10) holder.artist.text = artistText
+            else holder.artist.text = artistText.substring(0, 9)*/
+            holder.artist.text = artistText
         }
         item.setOnClickListener {
-            listener.onClick(conNumList[position])
+            listener.onClick(conList[position].conNum)
         }
     }
 
@@ -51,12 +53,14 @@ private val itemList: ArrayList<View> = ArrayList()
         }
     }
 
-    fun setData(bitmapList: ArrayList<Bitmap?>, titleList: ArrayList<String>, artistList: ArrayList<String>) {
+    fun setData(bitmapList: ArrayList<Bitmap?>, conList_: ArrayList<ConInfo>) {
         bitmapArrayList.clear()
         bitmapArrayList.addAll(bitmapList)
-        titleArrayList.clear()
+        /*titleArrayList.clear()
         titleArrayList.addAll(titleList)
         artistArrayList.clear()
-        artistArrayList.addAll(artistList)
+        artistArrayList.addAll(artistList)*/
+        conList.clear()
+        conList.addAll(conList_)
     }
 }

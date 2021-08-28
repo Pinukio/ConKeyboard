@@ -6,4 +6,5 @@ interface OnItemClick {
     fun onClick(position: Int) {}
     fun onClick(conNum: String) {}
     fun onConClick(conNum: String, conName: String) {}
+    fun onPositiveButtonClick() {}
 }

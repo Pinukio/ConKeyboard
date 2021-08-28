@@ -2,6 +2,7 @@ package com.example.conkeyboard
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,26 +14,26 @@ import kotlin.math.ceil
 
 class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val itemList: ArrayList<ConData> = ArrayList()
-    private var loadingFlag: Boolean = false
+    private val bitmapList: ArrayList<Bitmap?> = ArrayList()
+    //private var loadingFlag: Boolean = false
     private val TYPE_ITEM = 0
     private val TYPE_LOADING = 1
+    private var itemRemained = true
 
     override fun getItemViewType(position: Int): Int {
-        return when(loadingFlag) {
-            true -> TYPE_LOADING
-            else -> TYPE_ITEM
-        }
+        return if(ceil(itemList.size.toFloat() / 3).toInt() == position) TYPE_LOADING
+        else TYPE_ITEM
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            return when(viewType) {
-                TYPE_ITEM -> {
-                    ItemViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_search, parent, false))
-                }
-                else -> {
-                    LoadingViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.layout_loading, parent, false))
-                }
+        return when(viewType) {
+            TYPE_ITEM -> {
+                ItemViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_search, parent, false))
             }
+            else -> {
+                LoadingViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.layout_loading, parent, false))
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -41,30 +42,21 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
             val num: Int = itemList.size - index
 
             if(num < 3) {
-                val urlList: ArrayList<URL> = ArrayList()
                 for(i in 0 until num) {
-                    urlList.add(URL(itemList[index + i].photo[0]))
-                }
-                val baList: ArrayList<ByteArray?> = ConvertToByteArrayTask().execute(urlList).get()!!
-                for(i in 0 until num) {
-                    setItem(holder, i, baList[i], itemList[index + i].title, itemList[index + i].artist, itemList[index + i].conNum)
+                    setItem(holder, i, bitmapList[index + i], itemList[index + i].title, itemList[index + i].artist, itemList[index + i].conNum)
                 }
             }
             else {
-                val urlList: ArrayList<URL> = ArrayList()
                 for(i in 0..2) {
-                    urlList.add(URL(itemList[index + i].photo[0]))
-                }
-                val baList: ArrayList<ByteArray?> = ConvertToByteArrayTask().execute(urlList).get()!!
-                for(i in 0..2) {
-                    setItem(holder, i, baList[i], itemList[index + i].title, itemList[index + i].artist, itemList[index + i].conNum)
+                    setItem(holder, i, bitmapList[index + i], itemList[index + i].title, itemList[index + i].artist, itemList[index + i].conNum)
                 }
             }
         }
     }
 
     override fun getItemCount(): Int {
-        return ceil(itemList.size.toFloat() / 3).toInt()
+        return if(itemRemained) ceil(itemList.size.toFloat() / 3).toInt() + 1
+        else ceil(itemList.size.toFloat() / 3).toInt()
     }
 
     inner class ItemViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
@@ -88,22 +80,27 @@ class SearchAdapter(private val listener: OnItemClick): RecyclerView.Adapter<Rec
 
     inner class LoadingViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {}
 
-    fun addItem(items: List<ConData>) {
+    fun addItem(items: List<ConData>, bitmaps: List<Bitmap?>) {
         itemList.addAll(items)
+        bitmapList.addAll(bitmaps)
     }
 
-    fun setLoadingFlag(flag: Boolean) {
-        loadingFlag = flag
+    fun resetItem() {
+        itemList.clear()
+        bitmapList.clear()
     }
 
-    private fun setItem(holder: ItemViewHolder, position: Int, ba: ByteArray?, titleText: String, artistText: String, conNum: String) {
+    fun setItemRemained(flag: Boolean) {
+        itemRemained = flag
+    }
+
+    private fun setItem(holder: ItemViewHolder, position: Int, bitmap: Bitmap?, titleText: String, artistText: String, conNum: String) {
         val imageViewList: List<ImageView> = listOf(holder.img1, holder.img2, holder.img3)
         val titleList: List<TextView> = listOf(holder.title1, holder.title2, holder.title3)
         val artistList: List<TextView> = listOf(holder.artist1, holder.artist2, holder.artist3)
         val viewList: List<View> = listOf(holder.view1, holder.view2, holder.view3)
 
-        if(ba != null) {
-            val bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.size)
+        if(bitmap != null) {
             imageViewList[position].setImageBitmap(bitmap)
             titleList[position].text = titleText
             artistList[position].text = artistText

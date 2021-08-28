@@ -26,15 +26,13 @@ class MainActivity : AppCompatActivity(), OnItemClick {
         setContentView(binding.root)
 
         val pm = PreferenceManager()
-        val haveConNumList = pm.getConNumList(applicationContext, "have")
-        val haveConTitleList = pm.getConTitleList(applicationContext, "have")
-        val haveConArtistList = pm.getConArtistList(applicationContext, "have")
+        val haveConList = pm.getConList(applicationContext, "have")
         val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
-        if(haveConNumList != null) {
-            for(i in haveConNumList.indices) {
-                bitmapArrayList.add(loadPNG(getPath(haveConNumList[i]), "title.jpg"))
+        if(haveConList != null) {
+            for(i in haveConList.indices) {
+                bitmapArrayList.add(loadPNG(getPath(haveConList[i].conNum), "title.jpg"))
             }
-            adapter = ShopAdapter(bitmapArrayList, haveConTitleList!!, haveConArtistList!!, this, haveConNumList)
+            adapter = ShopAdapter(bitmapArrayList, this, haveConList)
             binding.recyclerConsHave.adapter = adapter
         }
 
@@ -46,63 +44,11 @@ class MainActivity : AppCompatActivity(), OnItemClick {
         /*val retrofit = RetrofitConnection(applicationContext)
         val dailyHitConCall: Call<List<ConData>> = retrofit.server.getDailyHitCons()
         val weeklyHitConCall: Call<List<ConData>> = retrofit.server.getWeeklyHitCons()
-        val newHitConCall: Call<List<ConData>> = retrofit.server.getNewCons()
+        val newConCall: Call<List<ConData>> = retrofit.server.getNewCons()
 
         val listener: OnItemClick = this
 
-        dailyHitConCall.enqueue(object: Callback<List<ConData>> {
-            override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
-                val dataList: List<ConData>? = response.body()
-                if(dataList != null) {
-                    bitmapArrayList.clear()
-                    val conNumList: ArrayList<String> = ArrayList()
-                    for(i in dataList.indices) {
-                        val byteArray = ConvertToByteArrayTask().execute(listOf(URL(dataList[i].photo[0]))).get()[0]
-                        if (byteArray != null) {
-                            val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                            bitmapArrayList.add(bitmap)
-                        } else {
-                            bitmapArrayList.add(null)
-                        }
-                        conNumList.add(dataList[i].conNum)
-                    }
-                    val adapter = ShopAdapter(bitmapArrayList, listener, conNumList)
-                    binding.recyclerConsDailyHit.adapter = adapter
-                }
-            }
-
-            override fun onFailure(call: Call<List<ConData>>, t: Throwable) {
-            }
-        })
-
-        weeklyHitConCall.enqueue(object: Callback<List<ConData>> {
-            override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
-                val dataList: List<ConData>? = response.body()
-                if(dataList != null) {
-                    bitmapArrayList.clear()
-                    val conNumList: ArrayList<String> = ArrayList()
-                    for(i in dataList.indices) {
-                        val byteArray =
-                            ConvertToByteArrayTask().execute(listOf(URL(dataList[i].photo[0])))
-                                .get()[0]
-                        if (byteArray != null) {
-                            val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                            bitmapArrayList.add(bitmap)
-                        } else {
-                            bitmapArrayList.add(null)
-                        }
-                        conNumList.add(dataList[i].conNum)
-                    }
-                    val adapter = ShopAdapter(bitmapArrayList, listener, conNumList)
-                    binding.recyclerConsWeeklyHit.adapter = adapter
-                }
-            }
-
-            override fun onFailure(call: Call<List<ConData>>, t: Throwable) {
-            }
-        })
-
-        newHitConCall.enqueue(object: Callback<List<ConData>> {
+        newConCall.enqueue(object: Callback<List<ConData>> {
             override fun onResponse(call: Call<List<ConData>>, response: Response<List<ConData>>) {
                 val dataList: List<ConData>? = response.body()
                 if(dataList != null) {
@@ -158,16 +104,36 @@ class MainActivity : AppCompatActivity(), OnItemClick {
     override fun onResume() {
         super.onResume()
         val pm = PreferenceManager()
-        val haveConNumList = pm.getConNumList(applicationContext, "have")
+        /*val haveConNumList = pm.getConNumList(applicationContext, "have")
         val haveConTitleList = pm.getConTitleList(applicationContext, "have")
-        val haveConArtistList = pm.getConArtistList(applicationContext, "have")
+        val haveConArtistList = pm.getConArtistList(applicationContext, "have")*/
+        val haveConList = pm.getConList(applicationContext, "have")
         val bitmapArrayList: ArrayList<Bitmap?> = ArrayList()
-        if(haveConNumList != null) {
-            for(i in haveConNumList.indices) {
-                bitmapArrayList.add(loadPNG(getPath(haveConNumList[i]), "title.jpg"))
+        if(haveConList != null) {
+            for(i in haveConList.indices) {
+                bitmapArrayList.add(loadPNG(getPath(haveConList[i].conNum), "title.jpg"))
             }
-            adapter.setData(bitmapArrayList, haveConTitleList!!, haveConArtistList!!)
+            adapter.setData(bitmapArrayList, haveConList)
             adapter.notifyDataSetChanged()
+        }
+    }
+    private fun saveImage(ba: ByteArray, path: File, name: String) {
+        val myPath = File(path, name)
+        var fos: FileOutputStream? = null
+        try {
+            fos = FileOutputStream(myPath)
+            fos.write(ba)
+        }
+        catch (e: Exception) {
+            e.printStackTrace()
+        }
+        finally {
+            try {
+                fos!!.close()
+            }
+            catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
     }
 }

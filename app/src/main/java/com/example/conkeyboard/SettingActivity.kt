@@ -19,19 +19,16 @@ class SettingActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val pm = PreferenceManager()
-        val useConNumList: ArrayList<String>? = pm.getConNumList(applicationContext, "use")
-        if(useConNumList != null) {
-            val useConNameList: ArrayList<ArrayList<String>> = pm.getConNameList(applicationContext, "use")!!
-            val useConTitleList: ArrayList<String> = pm.getConTitleList(applicationContext, "use")!!
-            val useConArtistList: ArrayList<String> = pm.getConArtistList(applicationContext, "use")!!
+        val useConList: ArrayList<ConInfo>? = pm.getConList(applicationContext, "use")
+        if(useConList != null) {
             val bitmapList: ArrayList<Bitmap?> = ArrayList()
-            for(i in useConNumList.indices) {
-                bitmapList.add(loadPhoto(getPath(useConNumList[i]), "title.jpg"))
+            for(i in useConList.indices) {
+                bitmapList.add(loadPhoto(getPath(useConList[i].conNum), "title.jpg"))
             }
-            val callback = ItemMoveCallback(useConNumList, useConNameList, useConTitleList, useConArtistList, pm, applicationContext)
+            val callback = ItemMoveCallback(useConList, pm, applicationContext)
             helper = ItemTouchHelper(callback)
             helper.attachToRecyclerView(binding.recyclerSetting)
-            val adapter = SettingAdapter(bitmapList, useConTitleList, helper)
+            val adapter = SettingAdapter(bitmapList, useConList, helper)
             binding.recyclerSetting.adapter = adapter
         }
         binding.btnBack.setOnClickListener {

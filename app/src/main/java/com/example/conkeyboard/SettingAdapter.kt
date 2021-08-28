@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 import kotlin.collections.ArrayList
 
-class SettingAdapter(private val bitmapList: ArrayList<Bitmap?>, private val useConTitleList: ArrayList<String>, private val helper: ItemTouchHelper): RecyclerView.Adapter<SettingAdapter.MyViewHolder>() {
+class SettingAdapter(private val bitmapList: ArrayList<Bitmap?>, private val useConList: ArrayList<ConInfo>, private val helper: ItemTouchHelper): RecyclerView.Adapter<SettingAdapter.MyViewHolder>() {
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
@@ -25,7 +25,7 @@ class SettingAdapter(private val bitmapList: ArrayList<Bitmap?>, private val use
         val bitmap = bitmapList[position]
         if(bitmap != null) {
             holder.imageView.setImageBitmap(bitmap)
-            holder.title.text = useConTitleList[position]
+            holder.title.text = useConList[position].title
             holder.btn.setOnTouchListener { v, event ->
                 if(event.actionMasked == MotionEvent.ACTION_DOWN) {
                     helper.startDrag(holder)
